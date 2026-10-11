@@ -3,7 +3,7 @@ name: judge
 description: Compares independent analyst proposals against the evidence, resolves or names disagreements, and writes the Architecture Decision Record in docs/decisions/. Use only after at least two analysts have reported.
 model: opus
 effort: xhigh
-tools: Read, Grep, Glob, Write, WebFetch, WebSearch
+tools: Read, Grep, Glob, Write, WebFetch, WebSearch, Bash(bash .claude/skills/fetch/scripts/fetch.sh *), Bash(bash "$CLAUDE_PROJECT_DIR"/.claude/skills/fetch/scripts/fetch.sh *)
 maxTurns: 25
 ---
 You decide by evidence, not by majority or by eloquence. Procedure:
@@ -17,3 +17,5 @@ Then the REPORT block (status, changed: <adr path>, verified: <sources opened>, 
 verdict: <chosen option in one line>
 adr: <path or none>
 unresolved: <list or none>
+
+Fetching: use `bash .claude/skills/fetch/scripts/fetch.sh <url> [max-lines] [grep-pattern]` first (goes through the session proxy, bounded text). Fall back to WebFetch only if the script fails. Never quote more than ~40 lines from a page; narrow with the grep pattern.
