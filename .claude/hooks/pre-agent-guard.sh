@@ -8,7 +8,7 @@ TYPE="$(jqi '.tool_input.subagent_type // empty')"
 MODEL="$(jqi '.tool_input.model // empty')"
 EFFORT="$(jqi '.tool_input.effort // empty')"
 PROMPT="$(jqi '.tool_input.prompt // empty')"
-ALLOWED=" planner implementer reviewer researcher analyst judge explorer binary-analyst test-runner claude-code-guide "
+ALLOWED=" planner architect implementer reviewer researcher analyst judge explorer binary-analyst test-runner claude-code-guide "
 
 [ -z "$TYPE" ] && deny "Name the worker: subagent_type must be one of:$ALLOWED(see .claude/agents/orchestrator.md §1)."
 case "$ALLOWED" in *" $TYPE "*) ;; *) deny "Unknown worker '$TYPE'. Use one of:$ALLOWED" ;; esac
@@ -19,7 +19,12 @@ case "$TYPE" in
   explorer|test-runner) [ "$MODEL" = "haiku" ] || deny "$TYPE runs on haiku (cheap lookups); do not spend $MODEL on it." ;;
   judge) [ "$MODEL" = "opus" ] && [ "$EFFORT" = "xhigh" ] || deny "judge runs on opus at xhigh: it is the one place where depth is bought on purpose." ;;
   analyst) [ "$MODEL" != "haiku" ] || deny "analyst needs opus or sonnet; haiku cannot carry an evidence-based argument." ;;
+  architect) [ "$MODEL" = "opus" ] || deny "architect runs on opus; boundary judgement is not a place to save." ;;
 esac
+# A planner brief must point at the accepted architecture so specs are placed correctly.
+if [ "$TYPE" = "planner" ] || [ "$TYPE" = "architect" ]; then
+  printf '%s' "$PROMPT" | grep -qF "ARCHITECTURE.md" || deny "Reference docs/architecture/ARCHITECTURE.md in the brief (Context) so the $TYPE works against the accepted plan."
+fi
 
 MISSING=""
 for h in "## Goal" "## Done when" "## Context" "## Report"; do

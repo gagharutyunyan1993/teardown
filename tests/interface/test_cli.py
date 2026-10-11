@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from retool.cli import main
+from retool.interface.cli.main import main
 
 
 def test_info(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

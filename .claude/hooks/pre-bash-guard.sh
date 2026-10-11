@@ -51,7 +51,9 @@ fi
 if printf '%s' "$CMD" | grep -Eq "(^|[;&([:space:]])(objdump|readelf)$E+[^|;&]*(-d|-D|-s|--disassemble|-x|-a|--all)($E|$)" && ! printf '%s' "$CMD" | grep -Eq "\\|$E*(head|grep|sed|awk|tail|wc|less|cut|sort|uniq)"; then
   deny "Full disassembly/dump floods the context. Pipe through head/grep, or target a symbol/section (-j .text --start-address=...)."
 fi
-if printf '%s' "$CMD" | grep -Eq "(^|[;&([:space:]])(pytest|uv$E+run$E+pytest)($E|$)" && printf '%s' "$CMD" | grep -Eq "(^|$E)-(v|vv|vvv|s)($E|$)"; then
+# Line-based so heredoc bodies ("import pytest", "grep -v") do not trip it.
+PYLINES="$(printf '%s\n' "$CMD" | grep -E "(^|[;&([:space:]])(pytest|uv$E+run$E+pytest)($E|$)" | grep -vE "^[[:space:]]*(import|from)[[:space:]]")"
+if [ -n "$PYLINES" ] && printf '%s' "$PYLINES" | grep -Eq "(^|$E)-(v|vv|vvv|s)($E|$)"; then
   deny "Run tests quietly: 'make test' or 'pytest -q -x'. Verbose test output wastes context."
 fi
 

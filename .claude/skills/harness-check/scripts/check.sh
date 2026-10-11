@@ -69,6 +69,7 @@ bp 'objdump -d samples/evil | grep -A20 main'; t "allow objdump|grep" allow $G
 bp 'objdump -h samples/evil';                  t "allow objdump -h" allow $G
 bp 'uv run pytest -vv';                        t "deny pytest -vv" deny $G
 bp 'uv run pytest -q -x tests/test_cli.py';    t "allow pytest -q" allow $G
+bp $'cat > t.py <<EOF\nimport pytest\nEOF\ngrep -v x f';     t "allow heredoc with import pytest + grep -v" allow $G
 
 echo "== read guard"
 G=$H/pre-read-guard.sh
@@ -120,6 +121,22 @@ do the thing
 ## Report
 report";                                                t "deny incomplete brief" deny $G
 ap implementer opus high "$(printf '## Goal\n## Done when\n## Context\n## Report\n- x')"; t "deny too short brief" deny $G
+
+echo "== architecture guard"
+G=$H/pre-agent-guard.sh
+ARCH="$GOOD
+## Architecture
+See docs/architecture/ARCHITECTURE.md"
+ap planner opus high "$GOOD";                           t "deny planner without ARCHITECTURE.md ref" deny $G
+ap planner opus high "$ARCH";                           t "allow planner with ARCHITECTURE.md ref" allow $G
+ap architect sonnet high "$ARCH";                       t "deny architect on sonnet" deny $G
+ap architect opus high "$ARCH";                         t "allow architect on opus" allow $G
+echo "== arch gate"
+if make arch >/dev/null 2>&1; then ok "make arch green on tree"; else bad "make arch red on tree"; fi
+mkdir -p src/retool/formats/domain
+printf 'from dataclasses import dataclass\n@dataclass\nclass M:\n    x: int\n' > src/retool/formats/domain/_archtest.py
+if uv run python tools/archcheck.py 2>/dev/null | grep -q 'A5'; then ok "archcheck catches unfrozen domain dataclass"; else bad "archcheck misses unfrozen dataclass"; fi
+rm -f src/retool/formats/domain/_archtest.py
 
 echo "== decision protocol guard"
 G=$H/pre-agent-guard.sh
@@ -180,6 +197,14 @@ sp reviewer "$R";                                        ss "block reviewer with
 sp reviewer "$R
 verdict: fix first";                                     ss "allow reviewer with verdict" allow
 sp explorer "src/x.py:1 — thing";                        ss "allow explorer free-form" allow
+sp architect "$R";                                       ss "block architect without verdict" block
+sp architect "$R
+verdict: approve";                                       ss "allow architect with verdict" allow
+printf '# spec\n## Goal\nx\n' > .claude/plans/_t.md
+sp planner "${R/src\/retool\/elf\/header.py/.claude/plans/_t.md}"; ss "block planner spec without Architecture section" block
+printf '## Architecture\n' >> .claude/plans/_t.md
+sp planner "${R/src\/retool\/elf\/header.py/.claude/plans/_t.md}"; ss "allow planner spec with Architecture section" allow
+rm -f .claude/plans/_t.md
 PAYLOAD='{"stop_hook_active":true,"agent_type":"implementer","last_assistant_message":"x"}'; ss "allow recursion guard" allow
 AN='## Recommendation
 Use pefile.

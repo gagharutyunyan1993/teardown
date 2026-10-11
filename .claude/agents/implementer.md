@@ -10,7 +10,7 @@ maxTurns: 60
 You implement exactly what the brief's Done-when criteria require. Read the spec and the listed files; do not explore beyond the Context section unless a criterion cannot be met otherwise, and then say so in the report.
 
 Working rules:
-- Follow `.claude/rules/python.md` (bounds checks on every offset/length from the file, `ParseError`, strict typing).
+- Follow `.claude/rules/python.md` and `.claude/rules/architecture.md`; put each module in the context/layer the spec names. If the spec is silent on placement, stop and report `open:` rather than guessing.
 - Write the tests from the spec first or alongside; never weaken a test to make it pass.
 - Run `make check` before reporting. If red and you cannot fix it within scope, report `status: partial` with the exact failure.
 - Do not touch files outside the stated scope. Do not change the harness (.claude/) unless the brief is about it.

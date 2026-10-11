@@ -7,7 +7,7 @@ set -u
 [ "$(jqi '.stop_hook_active // false')" = "true" ] && exit 0
 TYPE="$(jqi '.agent_type // empty')"
 MSG="$(jqi '.last_assistant_message // empty')"
-case "$TYPE" in planner|implementer|reviewer|researcher|analyst|judge|binary-analyst) ;; *) exit 0 ;; esac
+case "$TYPE" in planner|architect|implementer|reviewer|researcher|analyst|judge|binary-analyst) ;; *) exit 0 ;; esac
 
 fail() { printf '%s\n' "$1" >&2; exit 2; }
 printf '%s' "$MSG" | grep -qE '^\s*REPORT\s*$' || fail "Finish with the REPORT block (status/changed/verified/deviations/open/confidence), see your agent file."
@@ -35,6 +35,15 @@ if [ "$TYPE" = "judge" ]; then
   if [ "$STATUS" = "done" ]; then
     ADR="$(printf '%s' "$MSG" | grep -oiE '^\s*adr:\s*\S+' | tail -1 | awk '{print $2}')"
     [ -f "$ROOT/$ADR" ] || fail "status: done requires the ADR file to exist at the 'adr:' path ($ADR not found)."
+  fi
+fi
+if [ "$TYPE" = "architect" ]; then
+  printf '%s' "$MSG" | grep -qiE '^\s*verdict:\s*(approve|revise|ship|fix first)' || fail "Architect REPORT needs 'verdict: approve | revise | ship | fix first'."
+fi
+if [ "$TYPE" = "planner" ] && [ "$STATUS" = "done" ]; then
+  SPEC="$(printf '%s' "$MSG" | grep -oiE '^\s*changed:\s*\S+' | tail -1 | awk '{print $2}')"
+  if [ -n "$SPEC" ] && [ -f "$ROOT/$SPEC" ]; then
+    grep -qE '^## Architecture' "$ROOT/$SPEC" || fail "Spec $SPEC lacks a '## Architecture' section (context/layer/pattern per module). Add it."
   fi
 fi
 if [ "$TYPE" = "reviewer" ]; then

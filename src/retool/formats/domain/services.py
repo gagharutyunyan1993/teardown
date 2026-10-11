@@ -1,22 +1,10 @@
-"""Executable-format detection by magic bytes.
-
-Only the header is inspected. The input is untrusted: never trust lengths or
-offsets read from it without bounds checks.
-"""
+"""Domain services: pure functions over bytes. No I/O here."""
 
 from __future__ import annotations
 
-from enum import StrEnum
+from retool.formats.domain.model import Format
 
 _HEADER_LEN = 4
-
-
-class Format(StrEnum):
-    ELF = "elf"
-    PE = "pe"
-    MACHO = "macho"
-    UNKNOWN = "unknown"
-
 
 _MACHO_MAGICS = frozenset(
     {
@@ -30,7 +18,11 @@ _MACHO_MAGICS = frozenset(
 
 
 def detect(data: bytes) -> Format:
-    """Return the executable format of ``data`` based on its first bytes."""
+    """Return the container format of ``data`` based on its first bytes.
+
+    ``MZ`` only marks a PE candidate (DOS stub); ``\\xca\\xfe\\xba\\xbe`` is shared with
+    Java class files. Disambiguation is the job of the per-format parsers.
+    """
     head = data[:_HEADER_LEN]
     if head == b"\x7fELF":
         return Format.ELF

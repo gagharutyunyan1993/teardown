@@ -1,6 +1,6 @@
 # Single entry point for every check. Hooks and skills call these targets,
 # so swapping the stack means editing this file only.
-.PHONY: setup fmt lint typecheck test check
+.PHONY: setup fmt lint typecheck arch test check
 
 UV ?= uv
 
@@ -16,7 +16,11 @@ lint:
 typecheck:
 	$(UV) run mypy
 
+arch:
+	$(UV) run lint-imports --no-cache 2>&1 | grep -E "KEPT|BROKEN|Contracts:|^-|Error|Traceback" || exit 1; $(UV) run lint-imports --no-cache >/dev/null
+	$(UV) run python tools/archcheck.py
+
 test:
 	$(UV) run pytest
 
-check: lint typecheck test
+check: lint typecheck arch test

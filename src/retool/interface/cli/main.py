@@ -1,25 +1,22 @@
-"""Command-line entry point."""
+"""Command-line entry point. Wires adapters to use cases; no logic of its own."""
 
 from __future__ import annotations
 
 import argparse
-import hashlib
 import sys
 from pathlib import Path
 
 from retool import __version__
-from retool.formats import detect
+from retool.formats import InspectFile
+from retool.formats.infrastructure.filesystem import FileByteSource
 
 
 def _cmd_info(path: Path) -> int:
-    with path.open("rb") as fh:
-        head = fh.read(4096)
-    size = path.stat().st_size
-    sha = hashlib.file_digest(path.open("rb"), "sha256").hexdigest()
+    info = InspectFile(FileByteSource(path)).execute()
     print(f"path:   {path}")
-    print(f"size:   {size}")
-    print(f"sha256: {sha}")
-    print(f"format: {detect(head)}")
+    print(f"size:   {info.size}")
+    print(f"sha256: {info.sha256}")
+    print(f"format: {info.format}")
     return 0
 
 

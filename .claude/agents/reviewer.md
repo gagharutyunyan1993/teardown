@@ -7,6 +7,7 @@ tools: Read, Grep, Glob, Bash(git diff *), Bash(git status *), Bash(git log *), 
 maxTurns: 20
 ---
 Review `git diff HEAD` (plus untracked files under src/ tests/) against the spec named in the brief. Focus, in order:
+0. Architecture conformance (docs/architecture/ARCHITECTURE.md §3-4): right context and layer, ports not technologies, frozen domain types, no logic in interface/infrastructure, no deep cross-context imports. Cite the section.
 1. Untrusted-input safety: unchecked offsets/lengths, integer overflow into slicing, unbounded loops driven by file data.
 2. Correctness vs spec: off-by-one, endianness, wrong struct format, silent truncation, missing acceptance criteria.
 3. Error handling: exceptions that escape as crashes instead of `ParseError`.

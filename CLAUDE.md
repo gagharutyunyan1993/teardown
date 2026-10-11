@@ -3,14 +3,14 @@
 Talk to the user in Russian. Keep code, comments, commits and this file in English.
 
 ## Layout
-- `src/retool/` package (`cli.py` entry, `formats.py` magic detection). Add parsers as `src/retool/<format>/`.
+- `src/retool/<context>/{domain,application,infrastructure}/` bounded contexts (hexagonal); `shared/` kernel; `interface/cli/` composition root. Plan: `docs/architecture/ARCHITECTURE.md`.
 - `tests/` pytest; synthetic fixtures built in-test or under `tests/fixtures/` (< 64 KiB each).
 - `samples/` untrusted real-world inputs. Never executed, never edited, never read raw. Gitignored.
 - `analysis/` reports produced by the binary-analyst agent. Gitignored.
 - `.claude/` harness: hooks, rules, agents, skills, memory. See `.claude/rules/harness.md` before touching it.
 
 ## Commands (always through make; the stack lives in the Makefile)
-`make check` = `make lint` (ruff) + `make typecheck` (mypy --strict) + `make test` (pytest -q).
+`make check` = `make lint` (ruff) + `make typecheck` (mypy --strict) + `make arch` (import-linter + tools/archcheck.py) + `make test` (pytest -q).
 `make fmt` formats. `uv run retool info <file>` runs the CLI. `uv add <pkg>` adds a dependency (asks first).
 
 ## Harness map (do not fight it; it is there to save tokens and protect you)
@@ -34,6 +34,9 @@ Talk to the user in Russian. Keep code, comments, commits and this file in Engli
 ## Decisions
 Non-trivial decisions (dependency, parser layout, format quirk handling, safety trade-off) go through `/decide`: evidence dossier from primary sources with dates → two independent analysts on different models, in parallel, blind to each other → judge (opus, xhigh) resolves by evidence and writes `docs/decisions/NNNN-*.md`. Facts carry `(src: ...)`; unsourced claims are `(assumption)` and get verified. No decision from instinct or from a single model's opinion.
 
+## Architecture
+The accepted plan is `docs/architecture/ARCHITECTURE.md` (hexagonal + DDD by bounded context). `make arch` fails on layer or boundary violations; `.claude/rules/architecture.md` summarises the rules. Specs name context/layer/pattern per module; the `architect` worker approves any spec that changes a context, port or aggregate and reviews diffs touching `domain/`, ports or `interface/`. Deviating from the plan is a `/decide` question that ends in a superseding ADR, never a local exception.
+
 ## Token discipline
 - Grep first, then Read a range. Never Read a whole file to "get oriented".
 - Broad searches go to the `explorer` agent; it returns `file:line` lists, not file contents.
@@ -44,7 +47,7 @@ Non-trivial decisions (dependency, parser layout, format quirk handling, safety 
 - Reply briefly. No progress narration, no restating the diff, no "I will now".
 
 ## Safety
-- Inputs are hostile. Every parser bounds-checks offsets/lengths from the file; use `memoryview`/`struct` with explicit sizes; raise `retool.errors.ParseError` instead of crashing.
+- Inputs are hostile. Every parser bounds-checks offsets/lengths from the file; use `memoryview`/`struct` with explicit sizes; raise `retool.shared.ParseError` instead of crashing.
 - No network access for samples; no uploading hashes or files to third-party services without being asked.
 - Secrets never enter the repo, prompts or logs.
 

@@ -6,6 +6,7 @@ set -u
 
 F="$(jqi '.tool_input.file_path // empty')"
 [ -n "$F" ] && [ -f "$F" ] || exit 0
+case "$F" in "$ROOT"/*) ;; *) exit 0 ;; esac   # only project files
 REL="$(relpath "$F")"
 cd "$ROOT" || exit 0
 
