@@ -1,0 +1,29 @@
+# python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# untrusted inputs and generated reports
+samples/*
+!samples/README.md
+analysis/
+
+# claude harness: personal/local state
+.claude/settings.local.json
+.claude/state/
+CLAUDE.local.md
+
+# secrets
+.env
+.env.*
+*.pem
+*.key
+
+# git bundles for manual transfer
+*.bundle

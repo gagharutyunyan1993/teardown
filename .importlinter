@@ -1,0 +1,42 @@
+[importlinter]
+root_package = retool
+
+# Hexagonal layers inside every bounded context.
+[importlinter:contract:layers-formats]
+name = formats: interface -> application -> domain
+type = layers
+layers =
+    retool.formats.infrastructure
+    retool.formats.application
+    retool.formats.domain
+containers =
+
+# Domain and application never import infrastructure (adapters are wired in interface only).
+[importlinter:contract:no-infra-in-core]
+name = domain/application do not import infrastructure
+type = forbidden
+source_modules =
+    retool.formats.domain
+    retool.formats.application
+forbidden_modules =
+    retool.formats.infrastructure
+
+# The shared kernel depends on nothing inside retool.
+[importlinter:contract:shared-kernel-pure]
+name = shared kernel imports no context
+type = forbidden
+source_modules =
+    retool.shared
+forbidden_modules =
+    retool.formats
+    retool.interface
+
+# Contexts do not import the interface layer.
+[importlinter:contract:no-interface-from-contexts]
+name = contexts do not import interface
+type = forbidden
+source_modules =
+    retool.formats
+    retool.shared
+forbidden_modules =
+    retool.interface
