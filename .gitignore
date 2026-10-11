@@ -24,3 +24,6 @@ CLAUDE.local.md
 .env.*
 *.pem
 *.key
+
+# git bundles for manual transfer
+*.bundle
