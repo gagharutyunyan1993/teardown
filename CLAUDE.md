@@ -23,6 +23,14 @@ Talk to the user in Russian. Keep code, comments, commits and this file in Engli
 - Session start prints a short brief; after compaction the pre-compact snapshot is replayed. Do not re-explore.
 - Status line shows context usage. Above 60 % stop broad exploration and finish the current unit of work.
 
+## Orchestration (the foundation)
+- The main thread runs as the `orchestrator` agent (Fable): no Edit/Write/general Bash. It plans, briefs workers, verifies reports, talks to the user.
+- Workers (`.claude/agents/`): planner, implementer, reviewer, researcher, explorer, binary-analyst, test-runner. Model and effort are chosen per task from the routing table in `.claude/agents/orchestrator.md` and passed explicitly in every Agent call.
+- Every brief is a contract prompt (Role / Goal / Done when / Context / Constraints / Steps / Report); the pre-agent hook rejects incomplete ones.
+- Every worker ends with a REPORT block (status, changed, verified, deviations, open, confidence); the subagent-stop hook rejects missing or unverified reports. `status: done` from an implementer requires `make check: pass`.
+- Review findings go back to the same implementer via SendMessage. Two failed rounds → re-plan or ask the user.
+- If you are a worker reading this: your agent file is your contract; stay inside the brief's scope and report deviations honestly.
+
 ## Token discipline
 - Grep first, then Read a range. Never Read a whole file to "get oriented".
 - Broad searches go to the `explorer` agent; it returns `file:line` lists, not file contents.

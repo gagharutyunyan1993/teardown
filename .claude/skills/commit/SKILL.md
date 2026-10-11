@@ -1,8 +1,7 @@
 ---
 name: commit
-description: Commit the current work with a Conventional Commit message. Stages only relevant files, never samples/ or secrets.
+description: Commit the current work with a Conventional Commit message via the implementer worker (the orchestrator has no git write access). Stages only relevant files, never samples/ or secrets.
 argument-hint: [optional scope or hint]
-allowed-tools: Bash(git add *), Bash(git commit *), Bash(git status *), Bash(git diff *), Bash(git log *)
 ---
 State:
 
@@ -14,8 +13,10 @@ Recent subjects for style:
 
 !`git log -5 --format='%s'`
 
-Do:
-1. Stage by explicit path (`git add src/... tests/...`). Never `git add -A`/`.`. Never stage `samples/`, `.env*`, `.claude/state/`.
-2. One commit per logical change. Message: `type(scope): imperative summary` (feat, fix, refactor, test, docs, chore, build), body only if the why is not obvious. Hint from user: `$ARGUMENTS`.
-3. Commit with a heredoc message. Do not push unless asked.
-4. Reply with the commit hash and subject, nothing else.
+Delegate to `implementer` with model `sonnet`, effort `low`, using the contract prompt. Fill it from the state above:
+- Goal: commit the listed changes.
+- Done when: `git status --short` shows nothing staged-but-uncommitted for the listed paths; commit subject follows `type(scope): summary` (feat, fix, refactor, test, docs, chore, build); hint from user: `$ARGUMENTS`.
+- Context: the exact paths to stage (list them), the message you want.
+- Constraints: stage by explicit path, never `-A`/`.`; never `samples/`, `.env*`, `.claude/state/`; never `--no-verify`; do not push.
+- Report: hash + subject.
+Reply to the user with the hash and subject only.

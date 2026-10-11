@@ -89,6 +89,70 @@ wp "$ROOT/uv.lock";                            t "deny write uv.lock" deny $G
 wp "$ROOT/src/retool/x.py";                    t "allow write src" allow $G
 wp "$ROOT/.env";                               t "deny write .env" deny $G
 
+echo "== agent guard"
+G=$H/pre-agent-guard.sh
+GOOD='## Role
+implementer
+## Goal
+Add ELF header parsing.
+## Done when
+- tests/test_elf.py passes with the 6 listed cases
+- make check green
+## Context
+- spec: .claude/plans/elf-header.md
+- files: src/retool/formats.py:1-40
+## Constraints
+- scope: src/retool/elf/ and tests/test_elf.py only
+## Steps
+1. read spec 2. write tests 3. implement 4. make check
+## Report
+End with the REPORT block.'
+ap() { PAYLOAD="$(jq -cn --arg t "$1" --arg m "$2" --arg e "$3" --arg p "$4" '{tool_name:"Agent",tool_input:({subagent_type:$t,prompt:$p} + (if $m=="" then {} else {model:$m} end) + (if $e=="" then {} else {effort:$e} end))}')"; }
+ap implementer opus high "$GOOD";                       t "allow complete brief" allow $G
+ap implementer "" high "$GOOD";                         t "deny missing model" deny $G
+ap implementer opus "" "$GOOD";                         t "deny missing effort" deny $G
+ap implementer fable high "$GOOD";                      t "deny fable worker" deny $G
+ap general-purpose opus high "$GOOD";                   t "deny unknown worker" deny $G
+ap explorer opus low "$GOOD";                           t "deny explorer on opus" deny $G
+ap explorer haiku low "$GOOD";                          t "allow explorer on haiku" allow $G
+ap implementer opus high "## Goal
+do the thing
+## Report
+report";                                                t "deny incomplete brief" deny $G
+ap implementer opus high "$(printf '## Goal\n## Done when\n## Context\n## Report\n- x')"; t "deny too short brief" deny $G
+
+echo "== subagent stop"
+G=$H/subagent-stop-check.sh
+sp() { PAYLOAD="$(jq -cn --arg t "$1" --arg m "$2" '{stop_hook_active:false,agent_type:$t,last_assistant_message:$m}')"; }
+ss() { local name="$1" expect="$2"; local rc=0; printf '%s' "$PAYLOAD" | bash $H/subagent-stop-check.sh >/dev/null 2>&1 || rc=$?
+       if [ "$expect" = allow ] && [ $rc -eq 0 ]; then ok "$name"; elif [ "$expect" = block ] && [ $rc -eq 2 ]; then ok "$name"; else bad "$name" "rc=$rc expected=$expect"; fi; }
+R='Summary.
+REPORT
+status: done
+changed: src/retool/elf/header.py
+verified: make check: pass
+deviations: none
+open: none
+confidence: high'
+sp implementer "$R";                                     ss "allow implementer done+green" allow
+sp implementer "${R/make check: pass/make check: fail (mypy)}"; ss "block implementer done but red" block
+sp implementer "${R/status: done/status: partial}";      ss "allow implementer partial" allow
+sp implementer "all done, trust me";                     ss "block implementer no REPORT" block
+sp reviewer "$R";                                        ss "block reviewer without verdict" block
+sp reviewer "$R
+verdict: fix first";                                     ss "allow reviewer with verdict" allow
+sp explorer "src/x.py:1 — thing";                        ss "allow explorer free-form" allow
+PAYLOAD='{"stop_hook_active":true,"agent_type":"implementer","last_assistant_message":"x"}'; ss "allow recursion guard" allow
+
+echo "== agent files"
+for f in .claude/agents/*.md; do
+  n=$(basename "$f" .md)
+  grep -q '^model:' "$f" && ok "model set: $n" || bad "model missing: $n"
+  case "$n" in orchestrator) grep -Eq '^tools:.*\b(Edit|Write)\b' "$f" && bad "orchestrator has Edit/Write" || ok "orchestrator has no Edit/Write" ;;
+               *) grep -q '^effort:' "$f" && ok "effort set: $n" || bad "effort missing: $n" ;; esac
+done
+jq -e '.agent == "orchestrator"' .claude/settings.json >/dev/null && ok "settings: agent=orchestrator" || bad "settings: agent=orchestrator not set"
+
 echo "== stop guard"
 out="$(echo '{"stop_hook_active":true}' | bash $H/stop-verify.sh 2>&1)"; [ -z "$out" ] && ok "stop: recursion guard" || bad "stop: recursion guard"
 
