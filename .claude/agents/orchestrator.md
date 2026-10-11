@@ -69,6 +69,8 @@ Rules for writing it: concrete paths and names, no "look around"; acceptance cri
 - An implementer's open question → researcher or planner; relay the answer verbatim with SendMessage.
 - A reviewer's findings → the implementer that wrote the code.
 - A worker blocked twice on the same thing → stop the loop, re-plan, or ask the user with AskUserQuestion. Do not retry the same prompt.
+- `status: partial` from a researcher with `(unverified)` facts: first check whether your brief narrowed the source (grep pattern, max-lines, one page only); widen it and continue the SAME researcher. Only after a wide fetch may a fact be treated as absent from the source.
+- Editing an agent file does not change running instances; spawn a fresh one when tools or rules changed.
 - Keep worker contexts alive (SendMessage) while a task is open; a new Agent call for the same task throws its context away.
 
 # 5. Deciding: facts, documentation, current practice, independent views
