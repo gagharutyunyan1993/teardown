@@ -17,8 +17,13 @@ raw = open(sys.argv[1], "rb").read().decode("utf-8", "replace")
 limit = int(sys.argv[2]); pat = sys.argv[3]
 if "<html" in raw[:4000].lower() or "<body" in raw.lower():
     raw = re.sub(r"(?is)<(script|style|nav|header|footer|svg|noscript).*?</\1>", " ", raw)
-    raw = re.sub(r"(?i)<br\s*/?>|</(p|div|li|tr|h[1-6]|pre|section|article)>", "\n", raw)
-    raw = re.sub(r"(?i)</t[dh]>", "\t", raw)
+    # Table rows become one line: "cell | cell | cell" (MS docs wrap cells in <p> with newlines).
+    def row(m: re.Match[str]) -> str:
+        cells = re.findall(r"(?is)<t[dh][^>]*>(.*?)</t[dh]>", m.group(1))
+        cells = [re.sub(r"\s+", " ", re.sub(r"(?s)<[^>]+>", " ", c)).strip() for c in cells]
+        return "\n" + " | ".join(c for c in cells if c) + "\n"
+    raw = re.sub(r"(?is)<tr[^>]*>(.*?)</tr>", row, raw)
+    raw = re.sub(r"(?i)<br\s*/?>|</(p|div|li|h[1-6]|pre|section|article)>", "\n", raw)
     raw = re.sub(r"(?s)<[^>]+>", " ", raw)
     raw = html.unescape(raw)
 lines = [re.sub(r"[ \t]+", " ", l).strip() for l in raw.splitlines()]
