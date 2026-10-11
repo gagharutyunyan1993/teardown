@@ -31,6 +31,9 @@ Talk to the user in Russian. Keep code, comments, commits and this file in Engli
 - Review findings go back to the same implementer via SendMessage. Two failed rounds → re-plan or ask the user.
 - If you are a worker reading this: your agent file is your contract; stay inside the brief's scope and report deviations honestly.
 
+## Decisions
+Non-trivial decisions (dependency, parser layout, format quirk handling, safety trade-off) go through `/decide`: evidence dossier from primary sources with dates → two independent analysts on different models, in parallel, blind to each other → judge (opus, xhigh) resolves by evidence and writes `docs/decisions/NNNN-*.md`. Facts carry `(src: ...)`; unsourced claims are `(assumption)` and get verified. No decision from instinct or from a single model's opinion.
+
 ## Token discipline
 - Grep first, then Read a range. Never Read a whole file to "get oriented".
 - Broad searches go to the `explorer` agent; it returns `file:line` lists, not file contents.

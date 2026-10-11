@@ -121,6 +121,44 @@ do the thing
 report";                                                t "deny incomplete brief" deny $G
 ap implementer opus high "$(printf '## Goal\n## Done when\n## Context\n## Report\n- x')"; t "deny too short brief" deny $G
 
+echo "== decision protocol guard"
+G=$H/pre-agent-guard.sh
+EV='## Role
+analyst
+## Goal
+Recommend a PE parsing approach.
+## Done when
+- one recommendation with sources
+## Context
+You work independently and have not seen other proposals.
+## Evidence
+- pefile 2024.8.26 maintained (src: https://pypi.org/project/pefile, 2024-08)
+## Constraints
+- none
+## Steps
+1. read 2. argue
+## Report
+REPORT block.'
+ap analyst opus high "$EV";                             t "allow analyst with evidence" allow $G
+ap analyst haiku low "$EV";                             t "deny analyst on haiku" deny $G
+ap analyst opus high "$(printf '%s' "$EV" | sed 's/## Evidence/## Facts/')";      t "deny analyst without evidence" deny $G
+ap analyst opus high "$(printf '%s' "$EV" | sed 's/You work independently and have not seen other proposals./You know the question./')"; t "deny analyst without independence note" deny $G
+JD="$EV
+## Proposals
+### A
+## Recommendation
+pefile
+### B
+## Recommendation
+hand-written"
+ap judge opus xhigh "$JD";                              t "allow judge with two proposals" allow $G
+ap judge opus high "$JD";                               t "deny judge below xhigh" deny $G
+ap judge opus xhigh "$EV";                              t "deny judge without proposals" deny $G
+ap judge opus xhigh "$EV
+## Proposals
+## Recommendation
+only one";                                              t "deny judge with one proposal" deny $G
+
 echo "== subagent stop"
 G=$H/subagent-stop-check.sh
 sp() { PAYLOAD="$(jq -cn --arg t "$1" --arg m "$2" '{stop_hook_active:false,agent_type:$t,last_assistant_message:$m}')"; }
@@ -143,6 +181,56 @@ sp reviewer "$R
 verdict: fix first";                                     ss "allow reviewer with verdict" allow
 sp explorer "src/x.py:1 — thing";                        ss "allow explorer free-form" allow
 PAYLOAD='{"stop_hook_active":true,"agent_type":"implementer","last_assistant_message":"x"}'; ss "allow recursion guard" allow
+AN='## Recommendation
+Use pefile.
+## Reasoning
+1. maintained (src: https://pypi.org/project/pefile, 2024-08)
+2. parses directories (src: https://github.com/erocarrera/pefile, 2024)
+## Sources
+listed above
+would change my mind if: pefile stopped bounds-checking section tables
+REPORT
+status: done
+changed: none
+verified: pypi, github
+deviations: none
+open: none
+confidence: medium'
+sp analyst "$AN";                                        ss "allow analyst with sources" allow
+sp analyst "${AN//(src:/(see:}";                         ss "block analyst without src markers" block
+sp analyst "${AN/would change my mind if:/mind:}";       ss "block analyst without flip condition" block
+mkdir -p docs/decisions; touch docs/decisions/9999-test.md
+JR='table
+REPORT
+status: done
+changed: docs/decisions/9999-test.md
+verified: sources
+deviations: none
+open: none
+confidence: high
+verdict: pefile
+adr: docs/decisions/9999-test.md
+unresolved: none'
+sp judge "$JR";                                          ss "allow judge with adr" allow
+sp judge "${JR//9999-test/0000-missing}";                ss "block judge with missing adr file" block
+sp judge "${JR/unresolved: none/}";                      ss "block judge without unresolved" block
+rm -f docs/decisions/9999-test.md
+sp researcher "fact (src: https://x, 2025)
+REPORT
+status: done
+changed: none
+verified: x
+deviations: none
+open: none
+confidence: high";                                       ss "allow researcher with src" allow
+sp researcher "fact
+REPORT
+status: done
+changed: none
+verified: x
+deviations: none
+open: none
+confidence: high";                                       ss "block researcher without src" block
 
 echo "== agent files"
 for f in .claude/agents/*.md; do
