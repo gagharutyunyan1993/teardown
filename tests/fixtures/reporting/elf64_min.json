@@ -1,0 +1,199 @@
+{
+  "findings": [
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "input",
+      "value": {
+        "magic": "elf"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "elf.header",
+      "value": {
+        "abiversion": 0,
+        "arch": "x86_64",
+        "class": 64,
+        "data": "lsb",
+        "ehsize": 64,
+        "entry": 4194480,
+        "flags": 0,
+        "machine": 62,
+        "osabi": 0,
+        "phentsize": 56,
+        "phnum": 2,
+        "phoff": 64,
+        "shentsize": 64,
+        "shnum": 4,
+        "shoff": 224,
+        "shstrndx": 3,
+        "type": 2
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "elf.phdr",
+      "value": {
+        "align": 4096,
+        "filesz": 192,
+        "flags": 5,
+        "index": 0,
+        "memsz": 192,
+        "offset": 0,
+        "paddr": 4194304,
+        "type": 1,
+        "vaddr": 4194304
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "elf.phdr",
+      "value": {
+        "align": 4096,
+        "filesz": 8,
+        "flags": 6,
+        "index": 1,
+        "memsz": 256,
+        "offset": 192,
+        "paddr": 4198592,
+        "type": 1,
+        "vaddr": 4198592
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "elf.shdr",
+      "value": {
+        "addr": 0,
+        "addralign": 0,
+        "entsize": 0,
+        "flags": 0,
+        "index": 0,
+        "info": 0,
+        "link": 0,
+        "name": "",
+        "offset": 0,
+        "size": 0,
+        "type": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "elf.shdr",
+      "value": {
+        "addr": 4194480,
+        "addralign": 16,
+        "entsize": 0,
+        "flags": 6,
+        "index": 1,
+        "info": 0,
+        "link": 0,
+        "name": ".text",
+        "offset": 176,
+        "size": 16,
+        "type": 1
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "elf.shdr",
+      "value": {
+        "addr": 4198600,
+        "addralign": 8,
+        "entsize": 0,
+        "flags": 3,
+        "index": 2,
+        "info": 0,
+        "link": 0,
+        "name": ".bss",
+        "offset": 200,
+        "size": 248,
+        "type": 8
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "elf.shdr",
+      "value": {
+        "addr": 0,
+        "addralign": 1,
+        "entsize": 0,
+        "flags": 0,
+        "index": 3,
+        "info": 0,
+        "link": 0,
+        "name": ".shstrtab",
+        "offset": 200,
+        "size": 22,
+        "type": 3
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    }
+  ],
+  "input": {
+    "sha256": "686ac4b860df9b644d62c1e8330252ef0317c8492b8d52f43bd515aebe50e050",
+    "size": 480
+  },
+  "not_analysed": [
+    {
+      "reason": "elf symbols, dynamic section, relocations and notes not parsed in this version",
+      "stage": "formats.inspect"
+    }
+  ],
+  "raw_image": null,
+  "schema_version": 1,
+  "stages": [
+    {
+      "name": "formats.inspect",
+      "sha256": "8eec66d5ba11a7fa8c9b8257569a7a901305dff289e6fdaee98cee80ad244bba",
+      "version": "2"
+    }
+  ]
+}

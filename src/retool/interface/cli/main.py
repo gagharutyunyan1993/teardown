@@ -14,6 +14,7 @@ from retool.formats import (
     LoadRawImage,
     RawLoadSpec,
     RawSegmentSpec,
+    SegmentInfo,
 )
 from retool.formats.infrastructure.filesystem import FileByteSource
 from retool.reporting import RenderJsonReport
@@ -100,12 +101,31 @@ def _check_raw_usage(info: argparse.ArgumentParser, args: argparse.Namespace) ->
         info.error("--offset and --length require --base")
 
 
+def _print_segment(seg: SegmentInfo) -> None:
+    print(
+        f"segment {seg.name}: {seg.start} mem=0x{seg.mem_size:x} "
+        f"file=0x{seg.file_start:x}+0x{seg.file_size:x}"
+    )
+
+
 def _cmd_info(path: Path) -> int:
     info = InspectFile(FileByteSource(path)).execute()
     print(f"path:   {path}")
     print(f"size:   {info.size}")
     print(f"sha256: {info.sha256}")
     print(f"format: {info.format}")
+    if info.arch is not None:
+        print(f"arch:   {info.arch}")
+        print(f"entry:  {'none' if info.entry is None else info.entry}")
+    for seg in info.segments:
+        _print_segment(seg)
+    for sec in info.sections:
+        print(
+            f'section {sec.index} "{sec.name}" {sec.kind} addr=0x{sec.addr:x} '
+            f"off=0x{sec.offset:x} size=0x{sec.size:x}"
+        )
+    for note in info.not_analysed:
+        print(f"note:   {note.reason}")
     if info.format is Format.UNKNOWN:
         print(_UNKNOWN_HINT, file=sys.stderr)
     return 0
@@ -119,10 +139,7 @@ def _cmd_info_raw(path: Path, spec: RawLoadSpec) -> int:
     print(f"arch:   {info.arch}")
     print(f"entry:  {'none' if info.entry is None else info.entry}")
     for seg in info.segments:
-        print(
-            f"segment {seg.name}: {seg.start} mem=0x{seg.mem_size:x} "
-            f"file=0x{seg.file_start:x}+0x{seg.file_size:x}"
-        )
+        _print_segment(seg)
     if info.shadowed_format is not None:
         print(
             f"warning: input starts with {info.shadowed_format} magic; "

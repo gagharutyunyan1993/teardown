@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from retool.formats.domain.model import Format
+from retool.formats.domain.parsing import SectionSummary
 from retool.shared import ArchitectureId, Finding, NotAnalysed, SpaceAddress
 
 
@@ -17,6 +18,10 @@ class FileInfo:
     stage_version: str
     findings: tuple[Finding, ...]
     not_analysed: tuple[NotAnalysed, ...]
+    arch: ArchitectureId | None = None
+    entry: SpaceAddress | None = None
+    segments: tuple[SegmentInfo, ...] = ()
+    sections: tuple[SectionSummary, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

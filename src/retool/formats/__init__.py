@@ -14,6 +14,7 @@ from retool.formats.domain.image import (
     RawSegmentSpec,
 )
 from retool.formats.domain.model import Format
+from retool.formats.domain.parsing import SectionSummary
 from retool.formats.domain.ports import ByteSource
 from retool.formats.domain.services import detect
 
@@ -30,6 +31,7 @@ __all__ = [
     "RawImageInfo",
     "RawLoadSpec",
     "RawSegmentSpec",
+    "SectionSummary",
     "SegmentInfo",
     "detect",
 ]

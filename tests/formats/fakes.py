@@ -43,6 +43,25 @@ class SparseSource:
         return head + bytes(end - offset - len(head))
 
 
+class ShrinkingSource:
+    """Size ``len(data)``; the first ``honest_reads`` reads serve ``data``, later ``data[:cut]``."""
+
+    def __init__(self, data: bytes, cut: int, honest_reads: int = 0) -> None:
+        self._data = data
+        self._cut = cut
+        self._honest = honest_reads
+        self.calls: list[tuple[int, int]] = []
+
+    @property
+    def size(self) -> int:
+        return len(self._data)
+
+    def read(self, offset: int, size: int) -> bytes:
+        self.calls.append((offset, size))
+        data = self._data if len(self.calls) <= self._honest else self._data[: self._cut]
+        return data[offset : offset + size]
+
+
 def seg(
     off: int,
     length: int | None,

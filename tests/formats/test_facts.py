@@ -35,8 +35,19 @@ def test_format_facts_raw() -> None:
 def test_inspect_file_stage_fields() -> None:
     info = InspectFile(MemorySource(b"\x7fELF" + b"\0" * 60)).execute()
     assert info.stage == InspectFile.STAGE == "formats.inspect"
-    assert info.stage_version == "1"
-    assert (info.findings, info.not_analysed) == format_facts(Format.ELF, "formats.inspect")
+    assert info.stage_version == "2"
+    assert info.findings == (
+        Finding(
+            "input",
+            {"magic": "elf"},
+            Provenance.PARSED,
+            Verification.unverified(),
+            "formats.inspect",
+        ),
+    )
+    assert info.not_analysed == (
+        NotAnalysed("elf structure rejected: invalid EI_CLASS at offset 0x4"),
+    )
 
 
 def test_load_raw_stage_fields() -> None:

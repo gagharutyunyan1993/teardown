@@ -20,7 +20,7 @@
   },
   "not_analysed": [
     {
-      "reason": "container structure not parsed: no elf parser in this version",
+      "reason": "elf structure rejected: invalid EI_CLASS at offset 0x4",
       "stage": "formats.inspect"
     }
   ],
@@ -29,8 +29,8 @@
   "stages": [
     {
       "name": "formats.inspect",
-      "sha256": "c3317479b496443b1218c8fab2e1b0c782501ebbf56a3003b29b1b2b11be1bee",
-      "version": "1"
+      "sha256": "bc3ac3a6b5bd8de11364562a1470100fa26c2d4f21f075adf7abc3fbe10ab223",
+      "version": "2"
     }
   ]
 }

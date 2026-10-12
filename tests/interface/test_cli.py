@@ -3,7 +3,11 @@ from pathlib import Path
 
 import pytest
 
+from retool.formats import InspectFile
+from retool.interface.cli import main as cli_main
 from retool.interface.cli.main import main
+from tests.formats.elf_build import build_elf
+from tests.formats.fakes import MemorySource, ShrinkingSource
 
 
 def test_info(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -249,3 +253,62 @@ def test_info_json_errors_exit_1(
     out, err = capsys.readouterr()
     assert out == ""
     assert err.startswith("error:")
+
+
+_F64 = build_elf()
+_F64_TEXT = [
+    "format: elf",
+    "arch:   x86_64",
+    "entry:  ram:0x4000b0",
+    "segment phdr0: ram:0x400000 mem=0xc0 file=0x0+0xc0",
+    "segment phdr1: ram:0x4010c0 mem=0x100 file=0xc0+0x8",
+    'section 0 "" null addr=0x0 off=0x0 size=0x0',
+    'section 1 ".text" progbits addr=0x4000b0 off=0xb0 size=0x10',
+    'section 2 ".bss" nobits addr=0x4010c8 off=0xc8 size=0xf8',
+    'section 3 ".shstrtab" strtab addr=0x0 off=0xc8 size=0x16',
+    "note:   elf symbols, dynamic section, relocations and notes not parsed in this version",
+]
+
+
+def test_info_elf_text(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["info", _file(tmp_path, _F64)]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[2].startswith("sha256: ")
+    assert lines[3:] == _F64_TEXT
+
+
+def test_info_elf_rejected_structure_note(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["info", _file(tmp_path, _ELF)]) == 0
+    out = capsys.readouterr().out
+    assert "note:   elf structure rejected: invalid EI_CLASS at offset 0x4" in out
+
+
+def _reads_before_parse() -> int:
+    """Reads InspectFile makes before the ELF parser's first (ident) read, from a call trace."""
+    trace = MemorySource(_F64)
+    InspectFile(trace).execute()
+    return trace.calls.index((0, 16))
+
+
+@pytest.mark.parametrize("flags", [[], ["--json"]])
+def test_info_elf_input_changed_fails(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], flags: list[str]
+) -> None:
+    honest = _reads_before_parse()
+    monkeypatch.setattr(
+        cli_main, "FileByteSource", lambda path: ShrinkingSource(_F64, 0x120, honest_reads=honest)
+    )
+    assert main(["info", "x", *flags]) == 1
+    out, err = capsys.readouterr()
+    assert out == ""
+    # The hash pass and the magic read are served in full; the parser's read of shdr1 is short.
+    assert err.startswith("error: input changed during read at offset 0x120")
+
+
+def test_info_json_golden_elf64(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["info", _file(tmp_path, _F64), "--json"]) == 0
+    out, err = capsys.readouterr()
+    assert out.encode("ascii") == (FIXTURES / "elf64_min.json").read_bytes()
+    assert err == ""
