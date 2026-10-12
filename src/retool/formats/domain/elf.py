@@ -12,9 +12,9 @@ from dataclasses import dataclass, replace
 from enum import IntEnum
 from typing import Final
 
-from retool.formats.domain.model import InputChanged
+from retool.formats.domain.parsing import read_exact
 from retool.formats.domain.ports import ByteSource
-from retool.shared import Address, ByteRange, ParseError
+from retool.shared import Address, ParseError
 
 MAX_PHNUM: Final = 512
 MAX_SHNUM: Final = 3072
@@ -150,13 +150,6 @@ class ElfFile:
             raise ParseError("ELF table counts inconsistent")
 
 
-def display_name(raw: bytes) -> str:
-    """Printable ASCII kept except backslash and double quote; every other byte as ``\\xNN``."""
-    return "".join(
-        chr(b) if 0x20 <= b <= 0x7E and b not in (0x22, 0x5C) else f"\\x{b:02x}" for b in raw
-    )
-
-
 def section_kind(sh_type: int) -> str:
     """Display label of a section type; never compared by code."""
     match sh_type:
@@ -176,14 +169,6 @@ def section_kind(sh_type: int) -> str:
             return "symtab_shndx"
         case _:
             return f"type-0x{sh_type:x}"
-
-
-def _read(source: ByteSource, limit: int, offset: int, size: int) -> bytes:
-    rng = ByteRange(offset, size).check_within(limit)
-    data = source.read(rng.start, rng.size)
-    if len(data) != size:
-        raise InputChanged(offset=offset)
-    return data
 
 
 def _ints(fmt: str, buf: bytes) -> tuple[int, ...]:
@@ -257,7 +242,7 @@ def _name_table(source: ByteSource, size: int, tab: SectionHeader, ent: int) -> 
     if tab.sh_size == 0:
         return b""
     start = tab.sh_offset.value
-    table = _read(source, size, start, tab.sh_size)
+    table = read_exact(source, size, start, tab.sh_size)
     if table[0] != 0:
         raise ParseError("section name table does not start with NUL", offset=start)
     if table[-1] != 0:
@@ -270,7 +255,7 @@ def parse_elf(source: ByteSource) -> ElfFile:
     size = source.size
     if size < _EI_NIDENT:
         raise ParseError("ELF identification exceeds file", offset=0)
-    ident = _read(source, size, 0, _EI_NIDENT)
+    ident = read_exact(source, size, 0, _EI_NIDENT)
     if ident[:4] != _MAGIC:
         raise ParseError("bad ELF magic", offset=0)
     if ident[_OFF_CLASS] not in (ElfClass.ELF32, ElfClass.ELF64):
@@ -287,7 +272,7 @@ def parse_elf(source: ByteSource) -> ElfFile:
     order = "<" if ei_data is ElfData.LSB else ">"
     if size < lay.ehsize:
         raise ParseError("ELF header exceeds file", offset=0)
-    head = _read(source, size, 0, lay.ehsize)
+    head = read_exact(source, size, 0, lay.ehsize)
     (
         e_type,
         e_machine,
@@ -321,7 +306,7 @@ def parse_elf(source: ByteSource) -> ElfFile:
             raise ParseError("e_shentsize smaller than section header", offset=lay.off_shentsize)
         if e_shoff + e_shentsize > size:
             raise ParseError("section header table exceeds file", offset=e_shoff)
-        sh0 = _section(shdr_fmt, _read(source, size, e_shoff, lay.shentsize))
+        sh0 = _section(shdr_fmt, read_exact(source, size, e_shoff, lay.shentsize))
         shnum, shnum_at = e_shnum, lay.off_shnum
         if e_shnum == 0:
             shnum, shnum_at = sh0.sh_size, e_shoff + lay.sh_size
@@ -351,7 +336,7 @@ def parse_elf(source: ByteSource) -> ElfFile:
     phdrs: list[ProgramHeader] = []
     for i in range(phnum):
         at = e_phoff + i * e_phentsize
-        ph = _program(phdr_fmt, is64, _read(source, size, at, lay.phentsize))
+        ph = _program(phdr_fmt, is64, read_exact(source, size, at, lay.phentsize))
         _check_segment(ph, at, size, bits)
         phdrs.append(ph)
 
@@ -363,7 +348,7 @@ def parse_elf(source: ByteSource) -> ElfFile:
         ents.append(e_shoff)
     for i in range(1, shnum):
         at = e_shoff + i * e_shentsize
-        sh = _section(shdr_fmt, _read(source, size, at, lay.shentsize))
+        sh = _section(shdr_fmt, read_exact(source, size, at, lay.shentsize))
         _check_section(sh, at, size)
         shdrs.append(sh)
         ents.append(at)

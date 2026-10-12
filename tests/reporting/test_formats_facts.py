@@ -1,6 +1,7 @@
 import pytest
 
-from retool.formats import InspectFile, LoadRawImage, RawLoadSpec
+import retool.formats
+from retool.formats import InputChanged, InspectFile, LoadRawImage, RawLoadSpec
 from retool.reporting import InputDigest, RawImageLayout, SegmentLayout, StageOutput
 from retool.reporting.infrastructure.formats_facts import FormatsFactSource
 from retool.shared import ParseError
@@ -53,5 +54,9 @@ def test_raw_spec_error_before_hashing() -> None:
 
 def test_input_changed_during_read() -> None:
     spec = RawLoadSpec(arm, (seg(0, None, sa(ram, 0)),))
-    with pytest.raises(ParseError, match="input changed during read"):
+    with pytest.raises(InputChanged, match="input changed during read"):
         FormatsFactSource(GrowingSource(b"\0" * 16), spec).collect()
+
+
+def test_formats_exports_input_changed() -> None:
+    assert "InputChanged" in retool.formats.__all__

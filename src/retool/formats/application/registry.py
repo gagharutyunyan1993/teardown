@@ -5,6 +5,7 @@ from __future__ import annotations
 from retool.formats.domain.elf_parser import ElfParser
 from retool.formats.domain.model import Format
 from retool.formats.domain.parsing import FormatParser
+from retool.formats.domain.pe_parser import PeParser
 
 
 def parser_for(fmt: Format) -> FormatParser | None:
@@ -12,5 +13,7 @@ def parser_for(fmt: Format) -> FormatParser | None:
     match fmt:
         case Format.ELF:
             return ElfParser()
+        case Format.PE:
+            return PeParser()
         case _:
             return None

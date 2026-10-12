@@ -34,7 +34,7 @@ class InspectFile:
     """Basic facts about a byte source: size, digest, container format."""
 
     STAGE: Final = "formats.inspect"
-    STAGE_VERSION: Final = "2"  # bump when this use case's facts for the same input change
+    STAGE_VERSION: Final = "3"  # bump when this use case's facts for the same input change
 
     def __init__(self, source: ByteSource) -> None:
         self._source = source

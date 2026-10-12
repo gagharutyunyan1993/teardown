@@ -8,9 +8,9 @@ import pytest
 from retool.formats import Format, InspectFile, SectionSummary, SegmentInfo
 from retool.formats.application.registry import parser_for
 from retool.formats.domain.elf import parse_elf
+from retool.formats.domain.elf_facts import elf_facts
 from retool.formats.domain.elf_image import elf_image
 from retool.formats.domain.elf_parser import ElfParser
-from retool.formats.domain.facts import elf_facts
 from retool.formats.domain.model import InputChanged
 from retool.formats.domain.parsing import ParsedContainer, guarded_parse
 from retool.formats.domain.ports import ByteSource
@@ -114,13 +114,13 @@ def test_guarded_parse_propagates_input_changed() -> None:
 
 def test_parser_registry() -> None:
     assert isinstance(parser_for(Format.ELF), ElfParser)
-    for fmt in (Format.PE, Format.MACHO, Format.UNKNOWN, Format.RAW):
+    for fmt in (Format.MACHO, Format.UNKNOWN, Format.RAW):
         assert parser_for(fmt) is None
 
 
 def test_inspect_file_elf_fields() -> None:
     info = InspectFile(MemorySource(F64)).execute()
-    assert info.stage_version == "2"
+    assert info.stage_version == "3"
     assert info.arch == ArchitectureId("x86_64")
     assert info.entry == sa(ram, 0x4000B0)
     assert info.segments == (

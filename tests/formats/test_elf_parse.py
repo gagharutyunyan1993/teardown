@@ -9,14 +9,13 @@ from retool.formats.domain.elf import (
     ElfHeader,
     ProgramHeader,
     SectionHeader,
-    display_name,
     parse_elf,
     section_kind,
 )
 from retool.formats.domain.elf_image import elf_image
 from retool.formats.domain.elf_parser import ElfParser
 from retool.formats.domain.model import InputChanged
-from retool.formats.domain.parsing import SectionSummary
+from retool.formats.domain.parsing import SectionSummary, display_name
 from retool.shared import Address, ByteRange, ParseError
 from tests.formats.elf_build import F32, F64, build_elf, byte, p, patch
 from tests.formats.fakes import MemorySource, ShrinkingSource, SparseSource, ram, sa

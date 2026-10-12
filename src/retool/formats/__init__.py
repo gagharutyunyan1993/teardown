@@ -13,7 +13,7 @@ from retool.formats.domain.image import (
     RawLoadSpec,
     RawSegmentSpec,
 )
-from retool.formats.domain.model import Format
+from retool.formats.domain.model import Format, InputChanged
 from retool.formats.domain.parsing import SectionSummary
 from retool.formats.domain.ports import ByteSource
 from retool.formats.domain.services import detect
@@ -24,6 +24,7 @@ __all__ = [
     "FileInfo",
     "Format",
     "Image",
+    "InputChanged",
     "InspectFile",
     "LoadRawImage",
     "MappedSegment",

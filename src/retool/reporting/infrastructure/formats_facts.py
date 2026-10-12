@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from retool.formats import ByteSource, InspectFile, LoadRawImage, RawLoadSpec
+from retool.formats import ByteSource, InputChanged, InspectFile, LoadRawImage, RawLoadSpec
 from retool.reporting.domain.model import (
     InputDigest,
     RawImageLayout,
@@ -10,7 +10,6 @@ from retool.reporting.domain.model import (
     SegmentLayout,
     StageOutput,
 )
-from retool.shared import ParseError
 
 
 class FormatsFactSource:
@@ -27,7 +26,7 @@ class FormatsFactSource:
         stages = [StageOutput(info.stage, info.stage_version, info.findings, info.not_analysed)]
         if raw_info is not None:
             if raw_info.source_size != info.size:
-                raise ParseError("input changed during read")
+                raise InputChanged()
             layout = RawImageLayout(
                 raw_info.arch,
                 raw_info.entry,

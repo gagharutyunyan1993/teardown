@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
-from retool.formats.domain.elf import display_name, parse_elf, section_kind
+from retool.formats.domain.elf import parse_elf, section_kind
+from retool.formats.domain.elf_facts import elf_facts
 from retool.formats.domain.elf_image import elf_arch, elf_image
-from retool.formats.domain.facts import elf_facts
 from retool.formats.domain.model import Format
-from retool.formats.domain.parsing import ParsedContainer, SectionSummary, guarded_parse
+from retool.formats.domain.parsing import (
+    ParsedContainer,
+    SectionSummary,
+    display_name,
+    guarded_parse,
+)
 from retool.formats.domain.ports import ByteSource
 from retool.shared import NotAnalysed, ParseError
 

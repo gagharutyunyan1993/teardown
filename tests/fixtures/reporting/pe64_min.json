@@ -1,0 +1,227 @@
+{
+  "findings": [
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "input",
+      "value": {
+        "magic": "pe"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.header",
+      "value": {
+        "arch": "x86_64",
+        "characteristics": 34,
+        "e_lfanew": 64,
+        "machine": 34404,
+        "number_of_sections": 2,
+        "number_of_symbols": 0,
+        "pointer_to_symbol_table": 0,
+        "size_of_optional_header": 240,
+        "time_date_stamp": 1593835520
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.optional",
+      "value": {
+        "address_of_entry_point": 4096,
+        "base_of_code": 4096,
+        "checksum": 12648430,
+        "data_directories": [
+          {
+            "index": 0,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 1,
+            "size": 40,
+            "virtual_address": 8192
+          },
+          {
+            "index": 2,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 3,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 4,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 5,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 6,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 7,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 8,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 9,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 10,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 11,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 12,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 13,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 14,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 15,
+            "size": 0,
+            "virtual_address": 0
+          }
+        ],
+        "dll_characteristics": 33120,
+        "file_alignment": 512,
+        "format": "pe32+",
+        "image_base": 5368709120,
+        "loader_flags": 0,
+        "magic": 523,
+        "major_image_version": 2,
+        "major_linker_version": 14,
+        "major_os_version": 6,
+        "major_subsystem_version": 5,
+        "minor_image_version": 3,
+        "minor_linker_version": 36,
+        "minor_os_version": 1,
+        "minor_subsystem_version": 4,
+        "number_of_rva_and_sizes": 16,
+        "section_alignment": 4096,
+        "size_of_code": 512,
+        "size_of_headers": 512,
+        "size_of_heap_commit": 8192,
+        "size_of_heap_reserve": 524288,
+        "size_of_image": 12288,
+        "size_of_initialized_data": 512,
+        "size_of_stack_commit": 4096,
+        "size_of_stack_reserve": 1048576,
+        "size_of_uninitialized_data": 0,
+        "subsystem": 3,
+        "win32_version_value": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.section",
+      "value": {
+        "characteristics": 1610612768,
+        "index": 0,
+        "name": ".text",
+        "number_of_linenumbers": 0,
+        "number_of_relocations": 0,
+        "pointer_to_linenumbers": 0,
+        "pointer_to_raw_data": 512,
+        "pointer_to_relocations": 0,
+        "size_of_raw_data": 512,
+        "virtual_address": 4096,
+        "virtual_size": 16
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.section",
+      "value": {
+        "characteristics": 3221225536,
+        "index": 1,
+        "name": ".data",
+        "number_of_linenumbers": 0,
+        "number_of_relocations": 0,
+        "pointer_to_linenumbers": 0,
+        "pointer_to_raw_data": 1024,
+        "pointer_to_relocations": 0,
+        "size_of_raw_data": 512,
+        "virtual_address": 8192,
+        "virtual_size": 4096
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    }
+  ],
+  "input": {
+    "sha256": "29ccce7fc9b09c2b18ddedf628de35f255d7cb0a38afa340c44247335c9d9f76",
+    "size": 1536
+  },
+  "not_analysed": [
+    {
+      "reason": "pe imports, exports, relocations, resources, certificates, debug data, CLR metadata and COFF symbols not parsed in this version",
+      "stage": "formats.inspect"
+    }
+  ],
+  "raw_image": null,
+  "schema_version": 1,
+  "stages": [
+    {
+      "name": "formats.inspect",
+      "sha256": "7fdf857f1f389f331c0b25235ee798244b9736cc3de62a2982f427d093befe3e",
+      "version": "3"
+    }
+  ]
+}

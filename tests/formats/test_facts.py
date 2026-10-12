@@ -6,7 +6,7 @@ from retool.shared import Finding, NotAnalysed, ParseError, Provenance, Verifica
 from tests.formats.fakes import MemorySource, arm, ram, sa, seg
 
 
-@pytest.mark.parametrize("fmt", [Format.ELF, Format.PE, Format.MACHO])
+@pytest.mark.parametrize("fmt", [Format.ELF, Format.MACHO])
 def test_format_facts_structured(fmt: Format) -> None:
     assert format_facts(fmt, "p") == (
         (
@@ -35,7 +35,7 @@ def test_format_facts_raw() -> None:
 def test_inspect_file_stage_fields() -> None:
     info = InspectFile(MemorySource(b"\x7fELF" + b"\0" * 60)).execute()
     assert info.stage == InspectFile.STAGE == "formats.inspect"
-    assert info.stage_version == "2"
+    assert info.stage_version == "3"
     assert info.findings == (
         Finding(
             "input",

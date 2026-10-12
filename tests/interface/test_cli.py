@@ -8,6 +8,8 @@ from retool.interface.cli import main as cli_main
 from retool.interface.cli.main import main
 from tests.formats.elf_build import build_elf
 from tests.formats.fakes import MemorySource, ShrinkingSource
+from tests.formats.pe_build import P64
+from tests.formats.pe_build import p as pe_patch
 
 
 def test_info(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -312,3 +314,47 @@ def test_info_json_golden_elf64(tmp_path: Path, capsys: pytest.CaptureFixture[st
     out, err = capsys.readouterr()
     assert out.encode("ascii") == (FIXTURES / "elf64_min.json").read_bytes()
     assert err == ""
+
+
+_P64_TEXT = [
+    "format: pe",
+    "arch:   x86_64",
+    "entry:  ram:0x140001000",
+    "segment headers: ram:0x140000000 mem=0x200 file=0x0+0x200",
+    "segment sec0: ram:0x140001000 mem=0x10 file=0x200+0x10",
+    "segment sec1: ram:0x140002000 mem=0x1000 file=0x400+0x200",
+    'section 0 ".text" code addr=0x140001000 off=0x200 size=0x10',
+    'section 1 ".data" data addr=0x140002000 off=0x400 size=0x1000',
+    "note:   pe imports, exports, relocations, resources, certificates, debug data, "
+    "CLR metadata and COFF symbols not parsed in this version",
+]
+
+
+def test_info_pe_text(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["info", _file(tmp_path, P64)]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[2].startswith("sha256: ")
+    assert lines[3:] == _P64_TEXT
+
+
+def test_info_json_golden_pe64(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["info", _file(tmp_path, P64), "--json"]) == 0
+    out, err = capsys.readouterr()
+    assert out.encode("ascii") == (FIXTURES / "pe64_min.json").read_bytes()
+    assert err == ""
+
+
+def test_info_pe_rejected_structure_note(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["info", _file(tmp_path, pe_patch((0x58, 0x107)))]) == 0
+    out = capsys.readouterr().out
+    assert "note:   pe structure rejected: ROM optional header not supported at offset 0x58" in out
+
+
+def test_info_pe_section_address_unclamped(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["info", _file(tmp_path, pe_patch((0x70, 2**64 - 0x1000)))]) == 0
+    out = capsys.readouterr().out
+    assert 'section 0 ".text" code addr=0x10000000000000000' in out
