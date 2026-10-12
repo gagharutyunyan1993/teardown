@@ -30,6 +30,7 @@ source_modules =
 forbidden_modules =
     retool.formats
     retool.interface
+    retool.assist
 
 # Contexts do not import the interface layer.
 [importlinter:contract:no-interface-from-contexts]
@@ -40,3 +41,14 @@ source_modules =
     retool.shared
 forbidden_modules =
     retool.interface
+
+# ADR 0002 control 11: deterministic contexts never import the LLM context.
+# Add retool.disasm / retool.analysis / retool.reporting to source_modules in the change that
+# creates each one (import-linter 2.15 rejects a missing source module).
+[importlinter:contract:no-assist-in-deterministic]
+name = deterministic contexts do not import assist
+type = forbidden
+source_modules =
+    retool.formats
+forbidden_modules =
+    retool.assist

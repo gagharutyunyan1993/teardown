@@ -6,3 +6,4 @@
 - 2026-10-11 A running subagent keeps the tool list it was spawned with; after editing an agent file spawn a new instance, SendMessage will not pick up new tools
 - 2026-10-11 A narrow grep pattern in a fetch brief makes the researcher report facts as unverified that the page does contain; on status partial widen the pattern before concluding the source lacks it
 - 2026-10-12 researcher workers hit the 15-turn limit on dossiers with 10+ fetches; brief them with max 8 fetches and tell them to write after the budget, or split the dossier in two
+- 2026-10-12 CLI ints parsed with int(x, 0) have no digit limit for hex, but formatting them in decimal inside error messages hits the 4300-digit ValueError; bound parsed ints to 64 bits in the interface before bu
