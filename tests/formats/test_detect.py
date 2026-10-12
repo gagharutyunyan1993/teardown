@@ -17,3 +17,26 @@ from retool.formats import Format, detect
 )
 def test_detect(head: bytes, expected: Format) -> None:
     assert detect(head) is expected
+
+
+_MAGICS = [
+    b"\x7fELF",
+    b"MZ",
+    b"\xfe\xed\xfa\xce",
+    b"\xce\xfa\xed\xfe",
+    b"\xfe\xed\xfa\xcf",
+    b"\xcf\xfa\xed\xfe",
+    b"\xca\xfe\xba\xbe",
+]
+_HEADS = (
+    [b""]
+    + [bytes([a]) for a in range(256)]
+    + [bytes([a, b]) for a in range(256) for b in range(256)]
+    + _MAGICS
+    + [m + b"\0" * 60 for m in _MAGICS]
+)
+
+
+def test_detect_never_returns_raw() -> None:
+    for head in _HEADS:
+        assert detect(head) is not Format.RAW

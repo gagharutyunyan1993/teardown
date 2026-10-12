@@ -62,7 +62,7 @@ Accepted ADRs that amend this plan (the ADR wins where wording differs):
 - `docs/decisions/0001-raw-image-loading.md` — raw images in `formats`, explicit only; space/architecture vocabulary in `shared`; `MemoryMap`/`Image` stay in `formats` public API.
 - `docs/decisions/0002-llm-assist-context.md` — new `assist` context; single-shot, no tools in v1; findings types in `shared`; SDK confined to `assist/infrastructure`.
 
-Contracts these ADRs require in `.importlinter` (not yet present; added by an implementer in the same change that creates `assist`):
+Contracts these ADRs require in `.importlinter`. Slice 1 adds `retool.assist` to `shared-kernel-pure` and item 2 early, with `retool.formats` as the only source; item 2 gains `retool.disasm`/`.analysis`/`.reporting` in the change that creates each one (import-linter rejects a missing source module). The rest of item 1, and item 3, are added in the same change that creates `assist`:
 1. `assist` added to the four existing contracts: a `layers-assist` contract mirroring `layers-formats`; `retool.assist.domain`/`.application` in `no-infra-in-core` (forbidding `retool.assist.infrastructure`); `retool.assist` in `shared-kernel-pure` forbidden modules; `retool.assist` in `no-interface-from-contexts` sources.
 2. New `forbidden` contract: `retool.formats`, `retool.disasm`, `retool.analysis`, `retool.reporting` must not import `retool.assist`.
 3. New `forbidden` contract: the provider SDK is importable only from `retool.assist.infrastructure` (assumption per ADR 0002: needs `include_external_packages`; verify in the spec).

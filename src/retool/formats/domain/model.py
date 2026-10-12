@@ -12,3 +12,5 @@ class Format(StrEnum):
     PE = "pe"
     MACHO = "macho"
     UNKNOWN = "unknown"
+    RAW = "raw"
+    """Set only by an explicit raw load; detect() never returns it."""
