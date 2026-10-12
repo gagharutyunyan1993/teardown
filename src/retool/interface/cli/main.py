@@ -16,6 +16,8 @@ from retool.formats import (
     RawSegmentSpec,
 )
 from retool.formats.infrastructure.filesystem import FileByteSource
+from retool.reporting import RenderJsonReport
+from retool.reporting.infrastructure.formats_facts import FormatsFactSource
 from retool.shared import Address, AddressSpace, ArchitectureId, RetoolError, SpaceAddress
 
 _UNKNOWN_HINT = "unknown format; to load as a raw image use --raw --arch --base"
@@ -130,12 +132,18 @@ def _cmd_info_raw(path: Path, spec: RawLoadSpec) -> int:
     return 0
 
 
+def _cmd_info_json(path: Path, spec: RawLoadSpec | None) -> int:
+    sys.stdout.write(RenderJsonReport(FormatsFactSource(FileByteSource(path), spec)).execute())
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="retool")
     parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="command", required=True)
     info = sub.add_parser("info", help="basic facts about a file")
     info.add_argument("path", type=Path)
+    info.add_argument("--json", action="store_true", help="print a versioned JSON report")
     info.add_argument("--raw", action="store_true", help="load as a raw image (explicit only)")
     info.add_argument("--arch", help="architecture id, required with --raw")
     info.add_argument("--base", type=_int, help="load address of the single raw segment")
@@ -155,6 +163,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "info":
         _check_raw_usage(info, args)
         try:
+            if args.json:
+                return _cmd_info_json(args.path, _raw_spec(args) if args.raw else None)
             if args.raw:
                 return _cmd_info_raw(args.path, _raw_spec(args))
             return _cmd_info(args.path)

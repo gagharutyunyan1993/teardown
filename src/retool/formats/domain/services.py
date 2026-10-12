@@ -11,7 +11,7 @@ from retool.formats.domain.image import (
 from retool.formats.domain.model import Format
 from retool.shared import ByteRange, ParseError
 
-_HEADER_LEN = 4
+MAGIC_WINDOW = 4  # every magic detect() knows is <= MAGIC_WINDOW bytes
 
 _MACHO_MAGICS = frozenset(
     {
@@ -30,7 +30,7 @@ def detect(data: bytes) -> Format:
     ``MZ`` only marks a PE candidate (DOS stub); ``\\xca\\xfe\\xba\\xbe`` is shared with
     Java class files. Disambiguation is the job of the per-format parsers.
     """
-    head = data[:_HEADER_LEN]
+    head = data[:MAGIC_WINDOW]
     if head == b"\x7fELF":
         return Format.ELF
     if head[:2] == b"MZ":

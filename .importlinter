@@ -18,8 +18,11 @@ type = forbidden
 source_modules =
     retool.formats.domain
     retool.formats.application
+    retool.reporting.domain
+    retool.reporting.application
 forbidden_modules =
     retool.formats.infrastructure
+    retool.reporting.infrastructure
 
 # The shared kernel depends on nothing inside retool.
 [importlinter:contract:shared-kernel-pure]
@@ -31,6 +34,7 @@ forbidden_modules =
     retool.formats
     retool.interface
     retool.assist
+    retool.reporting
 
 # Contexts do not import the interface layer.
 [importlinter:contract:no-interface-from-contexts]
@@ -39,16 +43,46 @@ type = forbidden
 source_modules =
     retool.formats
     retool.shared
+    retool.reporting
 forbidden_modules =
     retool.interface
 
 # ADR 0002 control 11: deterministic contexts never import the LLM context.
-# Add retool.disasm / retool.analysis / retool.reporting to source_modules in the change that
-# creates each one (import-linter 2.15 rejects a missing source module).
+# Add retool.disasm / retool.analysis to source_modules in the change that creates each one
+# (import-linter 2.15 rejects a missing source module).
 [importlinter:contract:no-assist-in-deterministic]
 name = deterministic contexts do not import assist
 type = forbidden
 source_modules =
     retool.formats
+    retool.reporting
 forbidden_modules =
     retool.assist
+
+[importlinter:contract:layers-reporting]
+name = reporting: interface -> application -> domain
+type = layers
+layers =
+    retool.reporting.infrastructure
+    retool.reporting.application
+    retool.reporting.domain
+containers =
+
+# ARCH §3: reporting core reads formats only through an infrastructure adapter.
+[importlinter:contract:reporting-core-format-agnostic]
+name = reporting domain/application do not import formats
+type = forbidden
+source_modules =
+    retool.reporting.domain
+    retool.reporting.application
+forbidden_modules =
+    retool.formats
+
+# Dependency direction: formats is upstream of reporting.
+[importlinter:contract:formats-upstream-of-reporting]
+name = formats does not import reporting
+type = forbidden
+source_modules =
+    retool.formats
+forbidden_modules =
+    retool.reporting

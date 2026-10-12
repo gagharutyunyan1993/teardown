@@ -1,0 +1,36 @@
+{
+  "findings": [
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "input",
+      "value": {
+        "magic": "elf"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    }
+  ],
+  "input": {
+    "sha256": "cc9d6fac1f314ccbd3003c6a0e788a426958609b1312422d8fed40a08ee0bb51",
+    "size": 64
+  },
+  "not_analysed": [
+    {
+      "reason": "container structure not parsed: no elf parser in this version",
+      "stage": "formats.inspect"
+    }
+  ],
+  "raw_image": null,
+  "schema_version": 1,
+  "stages": [
+    {
+      "name": "formats.inspect",
+      "sha256": "c3317479b496443b1218c8fab2e1b0c782501ebbf56a3003b29b1b2b11be1bee",
+      "version": "1"
+    }
+  ]
+}

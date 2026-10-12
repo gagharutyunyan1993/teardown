@@ -1,0 +1,43 @@
+{
+  "findings": [],
+  "input": {
+    "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
+    "size": 256
+  },
+  "not_analysed": [
+    {
+      "reason": "container structure not parsed: unknown format",
+      "stage": "formats.inspect"
+    },
+    {
+      "reason": "raw image content not analysed",
+      "stage": "formats.raw"
+    }
+  ],
+  "raw_image": {
+    "arch": "armv7",
+    "entry": null,
+    "segments": [
+      {
+        "file_size": 256,
+        "file_start": 0,
+        "mem_size": 256,
+        "name": "seg0",
+        "start": "ram:0x8000000"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "stages": [
+    {
+      "name": "formats.inspect",
+      "sha256": "4821dc0c02e0eaba4f1789b3b08c5ed6360fc5a26261ccdbd785c5429d0f0152",
+      "version": "1"
+    },
+    {
+      "name": "formats.raw",
+      "sha256": "92cfbecff776298495722c94cefc74ad272b40ed48a21fee43af22719186c841",
+      "version": "1"
+    }
+  ]
+}

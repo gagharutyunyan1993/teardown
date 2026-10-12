@@ -116,6 +116,7 @@ def render_json(report: Report) -> str: ...         # calls stage_sha256 for eve
    `use_cases.py:45`, before the read at l.46, as pinned by `tests/formats/test_load_raw.py:23-27` (`past.calls == []`).
 2. `info = InspectFile(source).execute()`.
 3. TOCTOU guard: if `raw` and `raw_info.source_size != info.size`, raise `ParseError("input changed during read")`.
+   InspectFile also raises ParseError('input changed during read') on short read.
 4. Inspect stage: `StageOutput(info.stage, info.stage_version, info.findings, info.not_analysed)`. Raw stage:
    `StageOutput(raw_info.stage, raw_info.stage_version, raw_info.findings, raw_info.not_analysed, RawImageLayout(raw_info.arch,
    raw_info.entry, tuple(SegmentLayout(s.name, s.start, s.mem_size, s.file_start, s.file_size) for s in raw_info.segments)))`.
@@ -284,7 +285,7 @@ Verified on a scratch copy (import-linter 2.15, stub `reporting` packages): 8 ke
 1. `make check` passes; lint-imports prints `Contracts: 8 kept, 0 broken.`; archcheck prints `archcheck: ok`.
 2. Tests 1-35 exist under the names above and pass; no existing test body is edited (new tests are appended).
 3. `grep -rn "retool.formats" src/retool/reporting/domain src/retool/reporting/application` and
-   `grep -n "infrastructure" src/retool/reporting/__init__.py` print nothing; `grep -n "Finding(" src/retool/reporting` prints nothing.
+   `grep -n "infrastructure" src/retool/reporting/__init__.py` print nothing; `grep -rn "Finding(" src/retool/reporting` prints nothing.
 4. `grep -rnE "_MAGIC_WINDOW|_HEADER_LEN" src/` prints nothing; `grep -v '^\s*#' src/retool/formats/application/use_cases.py | grep -c MAGIC_WINDOW`
    prints 2; `test_check9_bounded_reads` (`tests/formats/test_load_raw.py:18-21`, `calls == [(0, 4)]`) passes unchanged.
 5. `retool.shared.__all__` is the 12 slice-1 names plus `check_json_value`; `grep -c "Format.RAW" src/retool/formats/domain/services.py` still prints 1.

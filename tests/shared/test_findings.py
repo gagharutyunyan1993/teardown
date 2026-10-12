@@ -86,3 +86,19 @@ def test_not_analysed(reason: str) -> None:
     with pytest.raises(ParseError, match="not-analysed reason must be"):
         NotAnalysed(reason)
     assert NotAnalysed("budget exceeded").reason == "budget exceeded"
+
+
+def _deep(depth: int) -> list[object]:
+    value: list[object] = []
+    for _ in range(depth - 1):
+        value = [value]
+    return value
+
+
+@pytest.mark.parametrize(
+    ("value", "reason"),
+    [(float("nan"), "not finite"), (_deep(33), "too deep"), ({1: 2}, "key not a string")],
+)
+def test_finding_validates_value(value: object, reason: str) -> None:
+    with pytest.raises(ParseError, match=reason):
+        Finding("s", value, Provenance.PARSED, Verification.unverified(), "p")

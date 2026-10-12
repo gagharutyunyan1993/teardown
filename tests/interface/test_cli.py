@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -150,3 +151,101 @@ def test_info_missing_path(
 ) -> None:
     assert main(["info", str(tmp_path / "missing"), *flags]) == 1
     assert capsys.readouterr().err.startswith("error:")
+
+
+FIXTURES = Path(__file__).parent.parent / "fixtures" / "reporting"
+_ELF = b"\x7fELF" + b"\0" * 60
+
+
+def test_info_json_golden_elf(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["info", _file(tmp_path, _ELF), "--json"]) == 0
+    out, err = capsys.readouterr()
+    assert out.encode("ascii") == (FIXTURES / "elf_magic.json").read_bytes()
+    assert err == ""
+
+
+def test_info_json_golden_raw(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    path = _file(tmp_path, b"\0" * 0x100)
+    assert main(["info", path, "--json", *_RAW, "--base", "0x8000000"]) == 0
+    out, err = capsys.readouterr()
+    assert out.encode("ascii") == (FIXTURES / "raw_base.json").read_bytes()
+    assert err == ""
+
+
+def test_info_json_raw_multi_map_entry(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    path = _file(tmp_path, b"\0" * 0x100)
+    maps = ["--map", "0:0x0:0x80", "--map", "0x80:0x4000:0x80@bank1", "--entry", "0x4000@bank1"]
+    assert main(["info", path, "--json", *_RAW, *maps]) == 0
+    out = capsys.readouterr().out
+    assert '"entry": "bank1:0x4000"' in out
+    assert '"start": "bank1:0x4000"' in out
+    assert json.loads(out)["raw_image"]["segments"] == [
+        {"file_size": 128, "file_start": 0, "mem_size": 128, "name": "seg0", "start": "ram:0x0"},
+        {
+            "file_size": 128,
+            "file_start": 128,
+            "mem_size": 128,
+            "name": "seg1",
+            "start": "bank1:0x4000",
+        },
+    ]
+
+
+def test_info_json_deterministic_no_path(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    outs = []
+    for name in ("secret-a.bin", "secret-b.bin"):
+        sample = tmp_path / name
+        sample.write_bytes(_ELF)
+        assert main(["info", str(sample), "--json"]) == 0
+        outs.append(capsys.readouterr().out)
+    assert outs[0] == outs[1]
+    assert "secret" not in outs[0]
+    assert str(tmp_path) not in outs[0]
+
+
+@pytest.mark.parametrize(
+    ("data", "flags"),
+    [(_ELF, []), (b"\0" * 16, []), (_ELF, [*_RAW, "--base", "0"])],
+)
+def test_info_json_stdout_is_one_document(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], data: bytes, flags: list[str]
+) -> None:
+    assert main(["info", _file(tmp_path, data), "--json", *flags]) == 0
+    out, err = capsys.readouterr()
+    assert out == json.dumps(json.loads(out), indent=2, sort_keys=True) + "\n"
+    assert err == ""
+
+
+@pytest.mark.parametrize(
+    "flags",
+    [
+        ["--arch", "armv7"],
+        ["--raw", "--base", "0"],
+        ["--raw", "--arch", "armv7"],
+        ["--base", "0"],
+    ],
+)
+def test_info_json_usage_errors(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], flags: list[str]
+) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["info", _file(tmp_path, _ELF), "--json", *flags])
+    assert exc.value.code == 2
+    assert capsys.readouterr().out == ""
+
+
+@pytest.mark.parametrize("missing", [False, True])
+def test_info_json_errors_exit_1(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], missing: bool
+) -> None:
+    if missing:
+        argv = ["info", str(tmp_path / "missing"), "--json"]
+    else:
+        path = _file(tmp_path, b"\0" * 16)
+        argv = ["info", path, "--json", *_RAW, "--base", "0", "--offset", "0x100"]
+    assert main(argv) == 1
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err.startswith("error:")
