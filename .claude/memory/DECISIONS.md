@@ -8,3 +8,4 @@
 - 2026-10-12 user confirmed 2026-10-12 that raw headerless firmware images, base address plus arch hint, are in scope for retool, and that LLM calls are part of the product, not only the dev harness; both need /de
 - 2026-10-12 raw images load only on explicit request inside formats via LoadRawImage and Format.RAW, never detected, no fallback; ArchitectureId, AddressSpace, SpaceAddress go to shared; MemoryMap, MappedSegment,
 - 2026-10-12 LLM calls live in a new assist context behind SuggestionSource, EvidenceSource and AuditLog ports; v1 is single-shot structured output with no tools; Provenance, Verification, Finding, NotAnalysed go 
+- 2026-10-12 adding the ADR 0002 control 11 import-linter contracts before assist exists, with source_modules growing per context, is an editorial clarification of ARCHITECTURE.md section 7, not a superseding ADR,
