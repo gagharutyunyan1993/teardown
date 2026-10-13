@@ -1,0 +1,375 @@
+{
+  "findings": [
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "input",
+      "value": {
+        "magic": "pe"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.header",
+      "value": {
+        "arch": "x86",
+        "characteristics": 258,
+        "e_lfanew": 64,
+        "machine": 332,
+        "number_of_sections": 2,
+        "number_of_symbols": 0,
+        "pointer_to_symbol_table": 0,
+        "size_of_optional_header": 224,
+        "time_date_stamp": 1593835520
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.optional",
+      "value": {
+        "address_of_entry_point": 4096,
+        "base_of_code": 4096,
+        "base_of_data": 8192,
+        "checksum": 12648430,
+        "data_directories": [
+          {
+            "index": 0,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 1,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 2,
+            "size": 144,
+            "virtual_address": 8192
+          },
+          {
+            "index": 3,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 4,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 5,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 6,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 7,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 8,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 9,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 10,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 11,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 12,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 13,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 14,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 15,
+            "size": 0,
+            "virtual_address": 0
+          }
+        ],
+        "dll_characteristics": 33088,
+        "file_alignment": 512,
+        "format": "pe32",
+        "image_base": 4194304,
+        "loader_flags": 0,
+        "magic": 267,
+        "major_image_version": 2,
+        "major_linker_version": 14,
+        "major_os_version": 6,
+        "major_subsystem_version": 5,
+        "minor_image_version": 3,
+        "minor_linker_version": 36,
+        "minor_os_version": 1,
+        "minor_subsystem_version": 4,
+        "number_of_rva_and_sizes": 16,
+        "section_alignment": 4096,
+        "size_of_code": 512,
+        "size_of_headers": 512,
+        "size_of_heap_commit": 8192,
+        "size_of_heap_reserve": 524288,
+        "size_of_image": 12288,
+        "size_of_initialized_data": 512,
+        "size_of_stack_commit": 4096,
+        "size_of_stack_reserve": 1048576,
+        "size_of_uninitialized_data": 0,
+        "subsystem": 3,
+        "win32_version_value": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.section",
+      "value": {
+        "characteristics": 1610612768,
+        "index": 0,
+        "name": ".text",
+        "number_of_linenumbers": 0,
+        "number_of_relocations": 0,
+        "pointer_to_linenumbers": 0,
+        "pointer_to_raw_data": 512,
+        "pointer_to_relocations": 0,
+        "size_of_raw_data": 512,
+        "virtual_address": 4096,
+        "virtual_size": 16
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.section",
+      "value": {
+        "characteristics": 3221225536,
+        "index": 1,
+        "name": ".data",
+        "number_of_linenumbers": 0,
+        "number_of_relocations": 0,
+        "pointer_to_linenumbers": 0,
+        "pointer_to_raw_data": 1024,
+        "pointer_to_relocations": 0,
+        "size_of_raw_data": 512,
+        "virtual_address": 8192,
+        "virtual_size": 4096
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.overlay",
+      "value": {
+        "certificate": null,
+        "offset": 1536,
+        "payload_size": 114,
+        "size": 114,
+        "trailing_size": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.signature",
+      "value": {
+        "offset": 1536,
+        "signature": "inno-setup-data"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.resource",
+      "value": {
+        "leaves": 1,
+        "offset": 1024,
+        "size": 144,
+        "types": [
+          {
+            "count": 1,
+            "type": 10
+          }
+        ]
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.loader",
+      "value": {
+        "crc_ok": true,
+        "data_offset": 1642,
+        "exe_checksum": 51,
+        "exe_offset": 17,
+        "exe_uncompressed_size": 34,
+        "header_offset": 1536,
+        "revision": 1,
+        "route": "resource",
+        "table_offset": 1120,
+        "version": "5.1.5"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.version",
+      "value": {
+        "build": 1,
+        "known": true,
+        "major": 6,
+        "minor": 4,
+        "patch": 0,
+        "raw": "Inno Setup Setup Data (6.4.0.1)",
+        "unicode": true
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.block",
+      "value": {
+        "compressed": true,
+        "compression": "lzma1",
+        "crc_ok": true,
+        "index": 1,
+        "offset": 1600,
+        "stored_size": 16
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.block",
+      "value": {
+        "compressed": true,
+        "compression": "lzma1",
+        "crc_ok": true,
+        "index": 2,
+        "offset": 1625,
+        "stored_size": 8
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.data",
+      "value": {
+        "magic_ok": true,
+        "offset": 1642
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    }
+  ],
+  "input": {
+    "sha256": "c0a6c7740939bb024cbcfd0009ea2d2d577f3a8b21c47b2f8b6ce730a7d42a4c",
+    "size": 1650
+  },
+  "not_analysed": [
+    {
+      "reason": "inno setup headers, entries and data chunks not decompressed or parsed in this version",
+      "stage": "formats.inspect"
+    },
+    {
+      "reason": "pe exports, relocations, resource contents, delay-load and bound imports, certificate contents, debug data, CLR metadata and COFF symbols not parsed in this version",
+      "stage": "formats.inspect"
+    }
+  ],
+  "raw_image": null,
+  "schema_version": 1,
+  "stages": [
+    {
+      "name": "formats.inspect",
+      "sha256": "aad505f75721cf05d2aa89330f0f5c6f89f50e0fccb5d9c8d83968637a407baa",
+      "version": "5"
+    }
+  ]
+}

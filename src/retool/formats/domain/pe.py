@@ -12,7 +12,9 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Final
 
+from retool.formats.domain.inno import InnoInfo
 from retool.formats.domain.parsing import read_exact
+from retool.formats.domain.pe_resources import ResourceSummary
 from retool.formats.domain.ports import ByteSource
 from retool.shared import Address, ByteRange, ParseError
 
@@ -274,7 +276,7 @@ class OverlayInfo:
 @dataclass(frozen=True, slots=True)
 class PeFile:
     """Immutable snapshot of a parsed PE: headers, data directories and sections in file order,
-    plus the import, certificate and overlay tables attached after the headers are parsed."""
+    plus the imports, certificates, overlay, resources and Inno info attached after the headers."""
 
     dos: DosHeader
     coff: CoffHeader
@@ -284,6 +286,8 @@ class PeFile:
     imports: tuple[ImportedDll, ...] = ()
     certificates: tuple[CertificateEntry, ...] = ()
     overlay: OverlayInfo | None = None
+    resources: ResourceSummary | None = None
+    inno: InnoInfo | None = None
 
     def __post_init__(self) -> None:
         if not (

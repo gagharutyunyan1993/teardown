@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
+from retool.formats.domain.inno_loader import inno_info
 from retool.formats.domain.model import Format, InputChanged
 from retool.formats.domain.parsing import (
     ParsedContainer,
@@ -16,16 +17,19 @@ from retool.formats.domain.pe import (
     ImportedDll,
     OverlayInfo,
     PeFile,
+    directory,
+    directory_offset,
     parse_pe,
     pe_section_kind,
 )
 from retool.formats.domain.pe_certificates import parse_certificates
 from retool.formats.domain.pe_facts import pe_facts
-from retool.formats.domain.pe_image import pe_arch, pe_image, section_mem_size
+from retool.formats.domain.pe_image import pe_arch, pe_image, rva_to_file, section_mem_size
 from retool.formats.domain.pe_imports import parse_imports
 from retool.formats.domain.pe_overlay import overlay_info
+from retool.formats.domain.pe_resources import ResourceSummary, parse_resources
 from retool.formats.domain.ports import ByteSource
-from retool.shared import NotAnalysed, ParseError
+from retool.shared import ByteRange, NotAnalysed, ParseError
 
 _NO_MAP_NOTE = "pe memory image not built: no headers or sections to map"
 
@@ -34,8 +38,18 @@ def _not_parsed(part: str, exc: ParseError) -> tuple[NotAnalysed, ...]:
     return (NotAnalysed(f"pe {part} not parsed: {exc}"),)
 
 
+def _resources(source: ByteSource, pe: PeFile) -> ResourceSummary | None:
+    d = directory(pe, 2)
+    if d is None:
+        return None
+    run = rva_to_file(pe, d.virtual_address)
+    if run is None:
+        raise ParseError("resource directory not file-backed", offset=directory_offset(pe, 2))
+    return parse_resources(source, ByteRange(run.start, min(d.size, run.size)))
+
+
 def attach_tables(source: ByteSource, pe: PeFile) -> tuple[PeFile, tuple[NotAnalysed, ...]]:
-    """Attach imports, certificates and overlay to ``pe``, in that order.
+    """Attach imports, certificates, overlay, resources and Inno info to ``pe``, in that order.
 
     A ``ParseError`` in one part empties only that part and becomes one note; ``InputChanged``
     (a ``ParseError``) and source I/O errors propagate.
@@ -62,8 +76,26 @@ def attach_tables(source: ByteSource, pe: PeFile) -> tuple[PeFile, tuple[NotAnal
         raise
     except ParseError as exc:  # defensive: overlay_info only reads within the file
         overlay, overlay_notes = None, _not_parsed("overlay", exc)
-    attached = replace(pe, imports=imports, certificates=certificates, overlay=overlay)
-    return attached, (*import_notes, *certificate_notes, *overlay_notes)
+    resources: ResourceSummary | None
+    resource_notes: tuple[NotAnalysed, ...] = ()
+    try:
+        resources = _resources(source, pe)
+    except InputChanged:
+        raise
+    except ParseError as exc:
+        resources, resource_notes = None, _not_parsed("resources", exc)
+    attached = replace(
+        pe, imports=imports, certificates=certificates, overlay=overlay, resources=resources
+    )
+    inno_notes: tuple[NotAnalysed, ...]
+    try:
+        inno, inno_notes = inno_info(source, attached)
+    except InputChanged:
+        raise
+    except ParseError as exc:
+        inno, inno_notes = None, _not_parsed("inno", exc)
+    notes = (*import_notes, *certificate_notes, *overlay_notes, *resource_notes, *inno_notes)
+    return replace(attached, inno=inno), notes
 
 
 def _build_pe(source: ByteSource, producer: str) -> ParsedContainer:

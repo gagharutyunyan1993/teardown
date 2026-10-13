@@ -67,7 +67,7 @@ def test_pt64_overlay_reads() -> None:
     source = MemorySource(PT64)
     attach_tables(source, parse_pe(source))
     after = source.calls[source.calls.index((0x20600, 8)) + 1 :]
-    assert after == [(0x600, 64), (0x20610, 16), (0x30, 4)]
+    assert after == [(0x600, 64), (0x20610, 16), (0x30, 4), (0x30, 12)]
 
 
 # 19-21: extent and certificate sub-range (O1-O2)

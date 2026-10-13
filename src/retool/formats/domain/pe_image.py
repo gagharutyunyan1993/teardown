@@ -59,6 +59,12 @@ def rva_to_file(pe: PeFile, rva: int) -> ByteRange | None:
     return None
 
 
+def rva_range(pe: PeFile, rva: int, size: int) -> ByteRange | None:
+    """The file-backed run at ``rva`` if it holds ``size`` bytes, else None."""
+    run = rva_to_file(pe, rva)
+    return run if run is not None and size <= run.size else None
+
+
 def _segment(section: PeSection, index: int, space: AddressSpace, base: int) -> MappedSegment:
     mem = section_mem_size(section)
     length = min(section.size_of_raw_data, mem)

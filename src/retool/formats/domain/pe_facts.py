@@ -7,20 +7,23 @@ from typing import Final
 
 from retool.formats.domain.facts import magic_finding, parsed_finding
 from retool.formats.domain.image import Image
+from retool.formats.domain.inno_facts import inno_facts
 from retool.formats.domain.model import Format
 from retool.formats.domain.parsing import display_name
 from retool.formats.domain.pe import ImportedDll, ImportedFunction, OverlayInfo, PeFile
 from retool.formats.domain.pe_image import pe_arch
+from retool.formats.domain.pe_resources import ResourceKey, ResourceSummary
 from retool.shared import Finding, JsonValue, NotAnalysed
 
 ENTRY_OUTSIDE_NOTE = "pe entry point outside every mapped section"
 STRING_TABLE_NOTE = "pe section names referencing the COFF string table not resolved"
 NOT_PARSED_NOTE = (
-    "pe exports, relocations, resources, delay-load and bound imports, certificate contents, "
-    "debug data, CLR metadata and COFF symbols not parsed in this version"
+    "pe exports, relocations, resource contents, delay-load and bound imports, "
+    "certificate contents, debug data, CLR metadata and COFF symbols not parsed in this version"
 )
 
 _STRING_TABLE_NAME: Final = re.compile(rb"/[0-9]+")
+MAX_RESOURCE_TYPE_ROWS: Final = 64
 
 
 def _header(pe: PeFile) -> JsonValue:
@@ -123,6 +126,33 @@ def _overlay(overlay: OverlayInfo) -> JsonValue:
     }
 
 
+def _utf16_display(raw: bytes) -> str:
+    """Printable ASCII UTF-16LE units kept except backslash and quote; others as ``\\uXXXX``."""
+    units = (int.from_bytes(raw[i : i + 2], "little") for i in range(0, len(raw) - 1, 2))
+    return "".join(
+        chr(u) if 0x20 <= u <= 0x7E and u not in (0x22, 0x5C) else f"\\u{u:04x}" for u in units
+    )
+
+
+def _resource(summary: ResourceSummary) -> JsonValue:
+    counts: dict[ResourceKey, int] = {}
+    for entry in summary.entries:
+        counts[entry.type] = counts.get(entry.type, 0) + 1
+    rows: list[JsonValue] = [
+        {"type": t if isinstance(t, int) else _utf16_display(t), "count": n}
+        for t, n in list(counts.items())[:MAX_RESOURCE_TYPE_ROWS]
+    ]
+    value: dict[str, JsonValue] = {
+        "offset": summary.offset.value,
+        "size": summary.size,
+        "leaves": len(summary.entries),
+        "types": rows,
+    }
+    if len(counts) > MAX_RESOURCE_TYPE_ROWS:
+        value["types_truncated"] = True
+    return value
+
+
 def pe_facts(
     pe: PeFile, image: Image | None, producer: str
 ) -> tuple[tuple[Finding, ...], tuple[NotAnalysed, ...]]:
@@ -168,6 +198,10 @@ def pe_facts(
             )
             for m in pe.overlay.signatures
         )
+    if pe.resources is not None:
+        findings.append(parsed_finding("pe.resource", _resource(pe.resources), producer))
+    if pe.inno is not None:
+        findings.extend(inno_facts(pe.inno, producer))
     notes: list[NotAnalysed] = []
     if image is not None and pe.optional.address_of_entry_point != 0 and image.entry is None:
         notes.append(NotAnalysed(ENTRY_OUTSIDE_NOTE))

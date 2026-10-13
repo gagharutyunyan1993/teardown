@@ -56,13 +56,13 @@ Version = tuple[int, int, int, int]         # (major, minor, patch, build), each
 @dataclass(frozen=True, slots=True)
 class _TableLayout: loader_version: Version | None; size: int; has_revision: bool; has_exe_compressed: bool
     has_message: bool; has_crc: bool
-    # post_init: size == 12 + 4 * (5 + has_revision + has_exe_compressed + has_message + has_crc); like pe._Layout
+    # post_init: size == 12 + 4 * (6 + has_revision + has_exe_compressed + has_message + has_crc); like pe._Layout
 _LAYOUTS: Final[Mapping[bytes, _TableLayout]]   # MappingProxyType, rows of ## Binary layout; _NEWEST = the 5.1.5 row
 class InnoOffsets: route: InnoRoute; table_offset: Address; table_size: int; loader_version: Version | None
     revision: int | None; exe_offset: Address; exe_compressed_size: int | None; exe_uncompressed_size: int
     exe_checksum: int; message_offset: Address | None; header_offset: Address; data_offset: Address
     crc_ok: bool | None
-    # table_size in (40, 44); revision None iff loader_version < 5.1.5 (None = newest); crc_ok None iff < 4.0.10;
+    # table_size == the _LAYOUTS row size for loader_version; revision None iff loader_version < 5.1.5 (None = newest); crc_ok None iff < 4.0.10;
     # exe_compressed_size / message_offset present iff the layout has them; ints are u32
 class InnoVersion: raw: bytes; version: Version; unicode: bool; known: bool    # 1 <= len(raw) <= 64, no NUL in raw
 class InnoBlockHeader: index: int; offset: Address; expected_crc: int; stored_size: int; flag: int
@@ -94,7 +94,7 @@ children validate themselves (t18 pins the VO invariants).
    off + 12 > size, or off + offset_table_size(magic read there) > size → note `inno loader pointer target 0x.. past end
    of file` and fall through to 2 (the part is not dropped). Magic with a failing complement → note `inno loader pointer
    at 0x30 fails its complement check`, fall through. Both notes are kept whatever later steps find. Pointer first
-   (src: innoextract loader/offsets.cpp load: exe file, then resource).
+   (src: innoextract loader/offsets.cpp load: exe file, then resource). Step-1 notes also survive an S8 raise in step 2.
 2. RESOURCE: `e = find_resource(pe.resources, 10, 11111)` (if resources); `rng = rva_range(pe, e.data_rva, e.size)`;
    None → `ParseError("inno offset table resource not file-backed", offset=e.entry_offset)`; table at rng.start, limit
    rng.start + e.size.
@@ -143,7 +143,7 @@ All little-endian.
   64 B NUL-padded. raw = bytes before the first NUL (all 64 if none); must contain `Inno Setup`; version = max over groups
   `rb"\((\d{1,3})\.(\d{1,3})\.(\d{1,3})[a-z]?(?:\.(\d{1,3}))?\)"` with every component ≤ 255 (build 0 if absent; 255 cap
   mirrors INNO_VERSION_EXT byte packing, assumption); none → not recognised. unicode = version ≥ 6.3.0 or `(u)`/`(U)` in
-  raw. known = field == entry NUL-padded to 64 for an entry of KNOWN_VERSIONS (memcmp in the source): the Evidence subset
+  raw. known = field == entry NUL-padded to 64 for an entry of `_KNOWN_FIELDS` (memcmp in the source): the Evidence subset
   `Inno Setup Setup Data (5.1.5)`, `(5.5.7) (u)`, `(6.0.0) (u)`, `(6.1.0) (u)`, `(6.3.0)`, `(6.4.0)`, `(6.4.0.1)`.
 - Block header ≥ 4.0.9 `"<IIB"` (9) at pos: expected CRC32, stored_size, flag; CRC32 over bytes [pos+4, pos+9); flag ≠ 0
   → LZMA1 if version ≥ 4.1.6 else zlib; payload = stored_size bytes of sub-chunks (u32 CRC32 + ≤ 4096 B)
@@ -153,8 +153,10 @@ All little-endian.
 
 ## Safety checks
 Resources (each violation → `ParseError(reason, offset=file offset)` → whole resources part dropped + note):
-- S1 Root: `root` comes from `rva_to_file` of the directory RVA; bound B = min(dir2.Size, backed run). Every structure
-  read is `read_exact(source, root.end, root.start + rel, n)` with rel + n ≤ B checked first.
+- S1 Root: `root` comes from `rva_to_file` of the directory RVA; bound B = min(dir2.Size, backed run). The tree region is
+  read once, `read_exact(source, root.end, root.start, min(B, MAX_RESOURCE_READ))`; every structure is a slice of that
+  window with rel + n ≤ B checked first (reasons unchanged), then rel + n ≤ window ("resource structure past the read
+  window").
 - S2 Directory at rel: rel + 16 ≤ B; n = named + id; n > MAX_RESOURCE_ENTRIES → "resource directory too large"; rel + 16
   + 8n > B → "resource entries past directory" (rejected, never clamped); total += n right after the header is read,
   before its entries; total > MAX_RESOURCE_TOTAL → "resource tree too large" (offset = that directory).
@@ -164,9 +166,9 @@ Resources (each violation → `ParseError(reason, offset=file offset)` → whole
 - S4 Visited set of directory rel offsets (root included): a revisit → "resource directory revisited" (cycles, shared
   subtrees).
 - S5 String at rel: rel + 2 ≤ B; Length > MAX_RESOURCE_NAME → "resource name too long"; rel + 2 + 2·Length ≤ B.
-- S6 Data entry at rel: rel + 16 ≤ B. OffsetToData/Size are stored, resolved only via `rva_range` (S8). Read budget ≤
-  16384·(8 + 16 + 16 + 130) + 16 B ≈ 2.8 MB.
-Inno (S8 raises → note `pe inno not parsed: ...`; S7, S9-S13 add the quoted note and stop their chain only):
+- S6 Data entry at rel: rel + 16 ≤ B. OffsetToData/Size are stored, resolved only via `rva_range` (S8). Read budget: one
+  read of min(B, MAX_RESOURCE_READ) B; a capped packed tree needs ≤ 16 + 16384·(8 + 16 + 130) = 2,785,296 B.
+Inno (S8 raises → `inno_info` returns (None, step-1 notes + `pe inno not parsed: ...`); S7, S9-S13 add the quoted note and stop their chain only):
 - S7 Pointer read 0x30..0x3C lies in the DOS header `parse_pe` already required; target checks in step 1 (note, fall
   through), never a raise.
 - S8 Resource route: `rva_range` None (unmapped, zero-filled tail, Size > backed run) → "inno offset table resource not
@@ -183,6 +185,7 @@ Inno (S8 raises → note `pe inno not parsed: ...`; S7, S9-S13 add the quoted no
 
 ## Caps
 MAX_RESOURCE_ENTRIES 4096 per table, MAX_RESOURCE_TOTAL 16384, MAX_RESOURCE_DEPTH 3, MAX_RESOURCE_NAME 64 units,
+MAX_RESOURCE_READ 4 MiB (≥ the 2,785,296 B worst case of S6),
 MAX_VERSION_FIELD 64, MAX_RESOURCE_TYPE_ROWS 64 (facts only) — all (assumption: real installers carry < 200 resources).
 `pe.resource` worst case: 64 rows × (named type 64 units × ≤ 7 JSON chars + ~20) ≈ 30,000 chars < 65,536; nodes ≤ 64·5 +
 8 < 4,096. `inno.version.raw` ≤ 64 × 5 = 320 chars. Findings +6 → ≤ 391 << MAX_FINDINGS 4096.
@@ -254,7 +257,8 @@ matches the reviewer's). Tests carry `t<NN>` in the function name.
 - t08 root 2 types × 4096 names, every name → its own distinct 1-entry language dir (shared data entry): totals 2, 4098,
   8194, 12290; the 4095th language dir under type 2 makes 16385 → exact reason "resource tree too large" at that dir.
 - t09 string offset B - 1 → past end; Length 65 → "name too long"; t10 data entry at B - 8 → past end; dir2.Size 0x20
-  with entries beyond → past end (via attach_tables note).
+  with entries beyond → past end (via attach_tables note); PI32 reads in [0x400, 0x490) are exactly (0x400, 0x90),
+  (0x460, 12), (0x46C, 32); a subdirectory at MAX_RESOURCE_READ + 0x10 → "past the read window", one read.
 - t11 dir2 RVA unmapped → note `pe resources not parsed: resource directory not file-backed at offset 0x..`; inno
   pointer route still runs.
 `test_inno.py` (pure byte parsers):
@@ -274,7 +278,8 @@ matches the reviewer's). Tests carry `t<NN>` in the function name.
 - t23 complement wrong, resource present → parsed via RESOURCE, complement note present before table notes.
 - t24 valid complement, target size - 8 (and size + 4) → past-end pointer note; with resource → parsed via RESOURCE;
   without → inno None, note only, no `pe inno not parsed` note.
-- t25 resource Size 43 → `pe inno not parsed: inno offset table larger than its resource at offset 0x448`; data RVA
+- t25 pointer target 0x5000 past end + data RVA unmapped → (pointer note, `pe inno not parsed: ... not file-backed at
+  offset 0x448`), pointer note first. Resource Size 43 → `pe inno not parsed: inno offset table larger than its resource at offset 0x448`; data RVA
   unmapped → "not file-backed at offset 0x448".
 - t26 header_offset = size → past-end note, loader still reported; header_offset = size - 20 → past-end note, no
   version, exactly one 12 B read at h; data_offset 0 → external-slices note; data_offset = size - 4 accepted, size - 3
@@ -291,7 +296,8 @@ matches the reviewer's). Tests carry `t<NN>` in the function name.
   overlay starting `zlb\x1a` without a table → "inno-like overlay" note only.
 - t31 real shape: `real_shape()` head with dir2 → tree at .data + 0x10, 5.1.5 table HO 0xd3e00, DO 0xd3e40 (zeros) →
   RESOURCE, version not-recognised note, magic_ok False, no 0x30 magic, inno reads ≤ 7.
-- t32 `ShrinkingSource` cut inside the resource tree / inside the table → `InputChanged` propagates.
+- t32 `ShrinkingSource` cut inside the resource tree read (0x400, cut 0x418) / inside the table magic (0x460, cut
+  0x464) → `InputChanged` propagates.
 `test_pe_facts.py`: t33 PI32 finding order and values; 65 ID types → 64 rows + types_truncated; named type → `\u` escapes.
 `test_cli.py`: t34 G6 golden; G1-G5 regenerated; text `info PI32` shows the two notes.
 
@@ -307,7 +313,7 @@ slice.cpp). Repo: HEAD 3b75236; pe.py 501 lines; `SIGNATURES` holds inno-setup-d
 - R1 Block 2 position pos1 + 9 + stored_size1 is inferred (assumption); its own CRC is the check (Acceptance 7).
 - R2 Requiring resource Size ≥ table size is stricter than innoextract (which reads past); a short resource is noted.
 - R3 Any resource-tree violation drops the whole tree, so a hostile file can hide route B; the note makes it visible.
-- R4 KNOWN_VERSIONS is a 7-entry subset: real versions may show known false (F-INNO-VERSIONS).
+- R4 `_KNOWN_FIELDS` is a 7-entry subset: real versions may show known false (F-INNO-VERSIONS).
 - R5 dir2.Size smaller than the tree (packers) → resources note (assumption: rare in installers).
 - R6 Pointer-first order mirrors innoextract; the brief listed resource first (both routes rarely coexist).
 - R7 pe.py grows to ~505 lines (F-PE-TABLES).

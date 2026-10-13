@@ -8,6 +8,7 @@ from retool.interface.cli import main as cli_main
 from retool.interface.cli.main import main
 from tests.formats.elf_build import build_elf
 from tests.formats.fakes import MemorySource, ShrinkingSource
+from tests.formats.inno_build import PI32
 from tests.formats.pe_build import P64, PT64
 from tests.formats.pe_build import p as pe_patch
 
@@ -325,7 +326,7 @@ _P64_TEXT = [
     "segment sec1: ram:0x140002000 mem=0x1000 file=0x400+0x200",
     'section 0 ".text" code addr=0x140001000 off=0x200 size=0x10',
     'section 1 ".data" data addr=0x140002000 off=0x400 size=0x1000',
-    "note:   pe exports, relocations, resources, delay-load and bound imports, "
+    "note:   pe exports, relocations, resource contents, delay-load and bound imports, "
     "certificate contents, debug data, CLR metadata and COFF symbols not parsed in this version",
 ]
 
@@ -373,3 +374,20 @@ def test_info_pe_section_address_unclamped(
     assert main(["info", _file(tmp_path, pe_patch((0x70, 2**64 - 0x1000)))]) == 0
     out = capsys.readouterr().out
     assert 'section 0 ".text" code addr=0x10000000000000000' in out
+
+
+def test_info_json_golden_pe32_inno_t34(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["info", _file(tmp_path, PI32), "--json"]) == 0
+    out, err = capsys.readouterr()
+    assert out.encode("ascii") == (FIXTURES / "pe32_inno.json").read_bytes()
+    assert err == ""
+
+
+def test_info_pe32_inno_text_notes_t34(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["info", _file(tmp_path, PI32)]) == 0
+    notes = [line for line in capsys.readouterr().out.splitlines() if line.startswith("note:")]
+    assert notes == [
+        "note:   inno setup headers, entries and data chunks not decompressed or parsed "
+        "in this version",
+        _P64_TEXT[-1],
+    ]

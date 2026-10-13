@@ -10,7 +10,7 @@ from retool.formats import Format, InspectFile, SectionSummary, SegmentInfo
 from retool.formats.application.registry import parser_for
 from retool.formats.domain.facts import magic_finding
 from retool.formats.domain.parsing import ParsedContainer
-from retool.formats.domain.pe import ImportedDll, ImportedFunction, ThunkEnd, parse_pe
+from retool.formats.domain.pe import ImportedDll, ImportedFunction, PeFile, ThunkEnd, parse_pe
 from retool.formats.domain.pe_facts import (
     ENTRY_OUTSIDE_NOTE,
     NOT_PARSED_NOTE,
@@ -19,6 +19,7 @@ from retool.formats.domain.pe_facts import (
 )
 from retool.formats.domain.pe_image import pe_image
 from retool.formats.domain.pe_parser import PeParser, attach_tables
+from retool.formats.domain.pe_resources import ResourceEntry, ResourceSummary
 from retool.shared import (
     Address,
     ArchitectureId,
@@ -29,6 +30,7 @@ from retool.shared import (
     Verification,
 )
 from tests.formats.fakes import MemorySource, ram, sa
+from tests.formats.inno_build import PI32
 from tests.formats.pe_build import P32, P64, PT64, build_pe, dir_at, name, p, p32, patch
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "reporting"
@@ -196,7 +198,7 @@ def test_parser_registry_pe() -> None:
 
 def test_inspect_file_pe_fields() -> None:
     info = InspectFile(MemorySource(P64)).execute()
-    assert info.stage_version == "4"
+    assert info.stage_version == "5"
     assert info.arch == ArchitectureId("x86_64")
     assert info.entry == sa(ram, 0x140001000)
     assert info.segments == (
@@ -278,4 +280,65 @@ def test_attach_tables_p64() -> None:
         ),
     )
     assert (attached.certificates, attached.overlay, notes) == ((), None, ())
-    assert source.calls[before:] == [(0x400, 40), (0, 257)]
+    assert source.calls[before:] == [(0x400, 40), (0, 257), (0x30, 12)]
+
+
+# slice 6a: pe.resource and inno.* facts
+
+
+def _pi32_facts(pe: PeFile | None = None) -> tuple[tuple[Finding, ...], tuple[NotAnalysed, ...]]:
+    if pe is None:
+        pe = attach_tables(MemorySource(PI32), parse_pe(MemorySource(PI32)))[0]
+    return pe_facts(pe, pe_image(pe), PRODUCER)
+
+
+def test_t33_pi32_findings_match_golden() -> None:
+    findings, notes = _pi32_facts()
+    golden_findings, golden_notes = _golden("pe32_inno.json")
+    assert findings == golden_findings
+    assert notes == golden_notes[1:]  # the inno note comes from attach_tables
+    assert [f.subject for f in findings][-8:] == [
+        "pe.overlay",
+        "pe.signature",
+        "pe.resource",
+        "inno.loader",
+        "inno.version",
+        "inno.block",
+        "inno.block",
+        "inno.data",
+    ]
+
+
+def _resource_value(entries: tuple[ResourceEntry, ...]) -> dict[str, JsonValue]:
+    pe = attach_tables(MemorySource(PI32), parse_pe(MemorySource(PI32)))[0]
+    pe = replace(pe, resources=ResourceSummary(Address(0x400), 0x90, entries), inno=None)
+    findings, _ = _pi32_facts(pe)
+    value = next(f.value for f in findings if f.subject == "pe.resource")
+    assert isinstance(value, dict)
+    return value
+
+
+def test_t33_resource_types_truncated() -> None:
+    entries = tuple(ResourceEntry(t, 1, 0, 0, 0, 0, Address(0)) for t in range(65))
+    value = _resource_value(entries)
+    rows = value["types"]
+    assert isinstance(rows, list)
+    assert len(rows) == 64
+    assert rows[63] == {"type": 63, "count": 1}
+    assert value["types_truncated"] is True
+    assert value["leaves"] == 65
+
+
+def test_t33_resource_named_type_escapes() -> None:
+    raw = 'A"\\é~'.encode("utf-16-le")
+    entries = (
+        ResourceEntry(raw, 1, 0, 0, 0, 0, Address(0)),
+        ResourceEntry(raw, 2, 0, 0, 0, 0, Address(0)),
+        ResourceEntry(10, 1, 0, 0, 0, 0, Address(0)),
+    )
+    value = _resource_value(entries)
+    assert value["types"] == [
+        {"type": "A\\u0022\\u005c\\u00e9~", "count": 2},
+        {"type": 10, "count": 1},
+    ]
+    assert "types_truncated" not in value

@@ -233,7 +233,7 @@
   },
   "not_analysed": [
     {
-      "reason": "pe exports, relocations, resources, delay-load and bound imports, certificate contents, debug data, CLR metadata and COFF symbols not parsed in this version",
+      "reason": "pe exports, relocations, resource contents, delay-load and bound imports, certificate contents, debug data, CLR metadata and COFF symbols not parsed in this version",
       "stage": "formats.inspect"
     }
   ],
@@ -242,8 +242,8 @@
   "stages": [
     {
       "name": "formats.inspect",
-      "sha256": "5ffb824bc5b7e98d1972b7bad8766bb464f082d94daab7eb903bf73b32b107ba",
-      "version": "4"
+      "sha256": "efcbf9f8512e51fe5e0636ae0747ee52e61d060251765cf8799784593b23c24a",
+      "version": "5"
     }
   ]
 }
