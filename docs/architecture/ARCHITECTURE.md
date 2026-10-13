@@ -1,7 +1,7 @@
 # retool architecture (accepted plan)
 
 Status: accepted 2026-10-11. Changes only through `/decide` and a superseding ADR; `make arch` enforces what is mechanical.
-Amended 2026-10-12 by ADR 0001 and ADR 0002 (index in §7).
+Amended 2026-10-12 by ADR 0001 and ADR 0002; 2026-10-13 by ADR 0003 (see §7).
 
 ## 1. Style
 Hexagonal (ports & adapters) with DDD tactical patterns, organised by bounded context. Dependencies point inward:
@@ -11,7 +11,7 @@ Hexagonal (ports & adapters) with DDD tactical patterns, organised by bounded co
 ## 2. Bounded contexts (src/retool/<context>/)
 | Context | Responsibility | Status |
 |---|---|---|
-| `formats` | container identification and structural parsing of ELF, PE, Mach-O (headers, sections, segments, symbols, imports); user-declared raw images loaded only on explicit request (`Format.RAW`, never returned by `detect()`; use case `LoadRawImage`; no content fallback) (ADR 0001). Public API also exports `MemoryMap`, `MappedSegment`, `Image`; their promotion to `shared` is an ADR 0001 revisit trigger, not a default. Structural parsing includes the fixed-layout structure of containers embedded in and located through a parsed format's own structures (e.g. Inno Setup loader table, version field, block headers in a PE), bounds-checked and without decompression; extracting, decompressing or mapping an embedded payload is a `/decide` question (architect ruling 2026-10-13, slice 6a) | started |
+| `formats` | container identification and structural parsing of ELF, PE, Mach-O (headers, sections, segments, symbols, imports); user-declared raw images loaded only on explicit request (`Format.RAW`, never returned by `detect()`; use case `LoadRawImage`; no content fallback) (ADR 0001). Public API also exports `MemoryMap`, `MappedSegment`, `Image`; their promotion to `shared` is an ADR 0001 revisit trigger, not a default. Structural parsing includes the fixed-layout structure of containers embedded in and located through a parsed format's own structures (e.g. Inno Setup loader table, version field, block headers in a PE), bounds-checked, with bounded in-memory decompression of a container's own metadata blocks per ADR 0003 (depth 1); extracting or mapping an embedded payload remains a `/decide` question (ADR 0001 deferred splitting ADR) (architect ruling 2026-10-13, slice 6a) | started |
 | `disasm` | instruction decoding over byte ranges, architecture-agnostic API | planned |
 | `analysis` | higher-level facts built from formats + disasm: strings, xrefs, function discovery, packer heuristics | planned |
 | `reporting` | rendering analysis results (text, JSON). Port `FactSource` (aggregate `Report`); its adapters map producer contexts' public DTOs and never author facts: `formats` builds its own `Finding`/`NotAnalysed` and returns them in its DTOs (ADR 0002) | started |
@@ -31,7 +31,7 @@ A new context, or a change to a context's responsibility, is a `/decide` questio
 ```
 Rules: domain imports only `shared` and stdlib (no I/O, no third-party); application imports domain + shared; infrastructure imports anything; interface imports contexts' public API and infrastructure adapters to wire them.
 Cross-context reads that feed another context's port are infrastructure adapters over the public API, never interface code: `assist/infrastructure` may import `retool.formats` / `retool.analysis` public APIs (`retool_evidence.py`, ADR 0002); `interface` stays logic-free (it wires, it does not map DTOs).
-Runtime `dependencies = []`. A third-party library enters only as an optional extra with its own ADR: `llm` (provider SDK, confined to `retool.assist.infrastructure`) pending ADR 0003, `mcp` (`interface/mcp`) pending ADR 0004.
+Runtime `dependencies = []`. A third-party library enters only as an optional extra with its own ADR: `llm` (provider SDK, confined to `retool.assist.infrastructure`) pending ADR 0004, `mcp` (`interface/mcp`) pending ADR 0005 (next free numbers, ADR 0002; 0003 is taken).
 
 ## 4. Tactical patterns (how, not just what)
 - **Value objects**: `@dataclass(frozen=True, slots=True)`, validated in `__post_init__`, raise `ParseError`. Equality by value.
@@ -61,6 +61,7 @@ Runtime `dependencies = []`. A third-party library enters only as an optional ex
 Accepted ADRs that amend this plan (the ADR wins where wording differs):
 - `docs/decisions/0001-raw-image-loading.md` — raw images in `formats`, explicit only; space/architecture vocabulary in `shared`; `MemoryMap`/`Image` stay in `formats` public API.
 - `docs/decisions/0002-llm-assist-context.md` — new `assist` context; single-shot, no tools in v1; findings types in `shared`; SDK confined to `assist/infrastructure`.
+- `docs/decisions/0003-bounded-decompression.md` — container metadata blocks decompressed by one pure, bounded stdlib streaming function in `formats/domain` (depth 1); payload extraction/mapping still deferred to the splitting ADR.
 
 Contracts these ADRs require in `.importlinter`. Slice 1 adds `retool.assist` to `shared-kernel-pure` and item 2 early, with `retool.formats` as the only source; item 2 gains `retool.disasm`/`.analysis`/`.reporting` in the change that creates each one (import-linter rejects a missing source module). The rest of item 1, and item 3, are added in the same change that creates `assist`:
 1. `assist` added to the four existing contracts: a `layers-assist` contract mirroring `layers-formats`; `retool.assist.domain`/`.application` in `no-infra-in-core` (forbidding `retool.assist.infrastructure`); `retool.assist` in `shared-kernel-pure` forbidden modules; `retool.assist` in `no-interface-from-contexts` sources.
