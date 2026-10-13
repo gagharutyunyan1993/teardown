@@ -355,7 +355,11 @@
   },
   "not_analysed": [
     {
-      "reason": "inno setup headers, entries and data chunks not decompressed or parsed in this version",
+      "reason": "inno version 6.4.0.1 unsupported: headers not parsed",
+      "stage": "formats.inspect"
+    },
+    {
+      "reason": "inno data chunks, slices and non-file entries not extracted or reported in this version",
       "stage": "formats.inspect"
     },
     {
@@ -368,8 +372,8 @@
   "stages": [
     {
       "name": "formats.inspect",
-      "sha256": "aad505f75721cf05d2aa89330f0f5c6f89f50e0fccb5d9c8d83968637a407baa",
-      "version": "5"
+      "sha256": "0116435d34eaf13442fbd4bc19d5e30faa1bb2e068af1a71abcc8b4b77dc92cc",
+      "version": "6"
     }
   ]
 }

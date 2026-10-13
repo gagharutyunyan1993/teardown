@@ -1,0 +1,505 @@
+{
+  "findings": [
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "input",
+      "value": {
+        "magic": "pe"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.header",
+      "value": {
+        "arch": "x86",
+        "characteristics": 258,
+        "e_lfanew": 64,
+        "machine": 332,
+        "number_of_sections": 2,
+        "number_of_symbols": 0,
+        "pointer_to_symbol_table": 0,
+        "size_of_optional_header": 224,
+        "time_date_stamp": 1593835520
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.optional",
+      "value": {
+        "address_of_entry_point": 4096,
+        "base_of_code": 4096,
+        "base_of_data": 8192,
+        "checksum": 12648430,
+        "data_directories": [
+          {
+            "index": 0,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 1,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 2,
+            "size": 144,
+            "virtual_address": 8192
+          },
+          {
+            "index": 3,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 4,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 5,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 6,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 7,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 8,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 9,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 10,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 11,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 12,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 13,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 14,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 15,
+            "size": 0,
+            "virtual_address": 0
+          }
+        ],
+        "dll_characteristics": 33088,
+        "file_alignment": 512,
+        "format": "pe32",
+        "image_base": 4194304,
+        "loader_flags": 0,
+        "magic": 267,
+        "major_image_version": 2,
+        "major_linker_version": 14,
+        "major_os_version": 6,
+        "major_subsystem_version": 5,
+        "minor_image_version": 3,
+        "minor_linker_version": 36,
+        "minor_os_version": 1,
+        "minor_subsystem_version": 4,
+        "number_of_rva_and_sizes": 16,
+        "section_alignment": 4096,
+        "size_of_code": 512,
+        "size_of_headers": 512,
+        "size_of_heap_commit": 8192,
+        "size_of_heap_reserve": 524288,
+        "size_of_image": 12288,
+        "size_of_initialized_data": 512,
+        "size_of_stack_commit": 4096,
+        "size_of_stack_reserve": 1048576,
+        "size_of_uninitialized_data": 0,
+        "subsystem": 3,
+        "win32_version_value": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.section",
+      "value": {
+        "characteristics": 1610612768,
+        "index": 0,
+        "name": ".text",
+        "number_of_linenumbers": 0,
+        "number_of_relocations": 0,
+        "pointer_to_linenumbers": 0,
+        "pointer_to_raw_data": 512,
+        "pointer_to_relocations": 0,
+        "size_of_raw_data": 512,
+        "virtual_address": 4096,
+        "virtual_size": 16
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.section",
+      "value": {
+        "characteristics": 3221225536,
+        "index": 1,
+        "name": ".data",
+        "number_of_linenumbers": 0,
+        "number_of_relocations": 0,
+        "pointer_to_linenumbers": 0,
+        "pointer_to_raw_data": 1024,
+        "pointer_to_relocations": 0,
+        "size_of_raw_data": 512,
+        "virtual_address": 8192,
+        "virtual_size": 4096
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.overlay",
+      "value": {
+        "certificate": null,
+        "offset": 1536,
+        "payload_size": 364,
+        "size": 364,
+        "trailing_size": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.signature",
+      "value": {
+        "offset": 1536,
+        "signature": "inno-setup-data"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.resource",
+      "value": {
+        "leaves": 1,
+        "offset": 1024,
+        "size": 144,
+        "types": [
+          {
+            "count": 1,
+            "type": 10
+          }
+        ]
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.loader",
+      "value": {
+        "crc_ok": true,
+        "data_offset": 1892,
+        "exe_checksum": 51,
+        "exe_offset": 17,
+        "exe_uncompressed_size": 34,
+        "header_offset": 1536,
+        "revision": 1,
+        "route": "resource",
+        "table_offset": 1120,
+        "version": "5.1.5"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.version",
+      "value": {
+        "build": 0,
+        "known": false,
+        "major": 6,
+        "minor": 4,
+        "patch": 3,
+        "raw": "Inno Setup Setup Data (6.4.3)",
+        "unicode": true
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.block",
+      "value": {
+        "compressed": true,
+        "compression": "lzma1",
+        "crc_ok": true,
+        "index": 1,
+        "offset": 1600,
+        "stored_size": 158
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.block",
+      "value": {
+        "compressed": true,
+        "compression": "lzma1",
+        "crc_ok": true,
+        "index": 2,
+        "offset": 1767,
+        "stored_size": 116
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.data",
+      "value": {
+        "magic_ok": true,
+        "offset": 1892
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.block1.decode",
+      "value": {
+        "codec": "lzma1",
+        "consumed": 149,
+        "decoded_size": 752,
+        "status": "ended",
+        "trailing": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.block2.decode",
+      "value": {
+        "codec": "lzma1",
+        "consumed": 107,
+        "decoded_size": 170,
+        "status": "ended",
+        "trailing": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.block1[lzma1]+0x0:setup_header",
+      "value": {
+        "app_name": "Demo App",
+        "app_publisher": "Retool Tests",
+        "app_version": "1.2.3",
+        "compress_method": "lzma",
+        "compress_method_id": 3,
+        "counts": {
+          "component": 0,
+          "custom_message": 0,
+          "dir": 0,
+          "file": 2,
+          "file_location": 2,
+          "icon": 0,
+          "ini": 0,
+          "install_delete": 0,
+          "language": 1,
+          "permission": 0,
+          "registry": 0,
+          "run": 0,
+          "task": 0,
+          "type": 0,
+          "uninstall_delete": 0,
+          "uninstall_run": 0
+        },
+        "files_reported": 2,
+        "files_total": 2,
+        "options_hex": "000000000000",
+        "text_truncated": false
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.block1[lzma1]+0x1c2:file_entry",
+      "value": {
+        "dest": "{app}\\u005capp.exe",
+        "file_type": "user_file",
+        "file_type_id": 0,
+        "filetime": 132000000000000000,
+        "flags": [
+          "timestamp_utc",
+          "chunk_compressed"
+        ],
+        "flags_raw": 18,
+        "index": 0,
+        "location": 0,
+        "options": 0,
+        "sha256": "a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333",
+        "size": 1024,
+        "source": "C:\\u005cbuild\\u005capp.exe",
+        "text_truncated": false,
+        "timestamp": "2019-04-17T18:40:00Z"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "inno.block1[lzma1]+0x24f:file_entry",
+      "value": {
+        "dest": "{app}\\u005creadme.txt",
+        "file_type": "user_file",
+        "file_type_id": 0,
+        "filetime": 0,
+        "flags": [
+          "chunk_compressed"
+        ],
+        "flags_raw": 16,
+        "index": 1,
+        "location": 1,
+        "options": 0,
+        "sha256": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+        "size": 5,
+        "source": "C:\\u005cbuild\\u005creadme.txt",
+        "text_truncated": false,
+        "timestamp": null
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    }
+  ],
+  "input": {
+    "sha256": "a5cdc171cb0cd8d379d60a511002e70ec9ea767c65bb8d5681d6a9a2e0aae527",
+    "size": 1900
+  },
+  "not_analysed": [
+    {
+      "reason": "inno data chunks, slices and non-file entries not extracted or reported in this version",
+      "stage": "formats.inspect"
+    },
+    {
+      "reason": "pe exports, relocations, resource contents, delay-load and bound imports, certificate contents, debug data, CLR metadata and COFF symbols not parsed in this version",
+      "stage": "formats.inspect"
+    }
+  ],
+  "raw_image": null,
+  "schema_version": 1,
+  "stages": [
+    {
+      "name": "formats.inspect",
+      "sha256": "3c0768fb0b1cfc03b82f3e0e3765f0b0aa2e60b6d3a698981f7030cc6cd60137",
+      "version": "6"
+    }
+  ]
+}

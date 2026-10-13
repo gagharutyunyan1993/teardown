@@ -8,7 +8,7 @@ from retool.interface.cli import main as cli_main
 from retool.interface.cli.main import main
 from tests.formats.elf_build import build_elf
 from tests.formats.fakes import MemorySource, ShrinkingSource
-from tests.formats.inno_build import PI32
+from tests.formats.inno_build import G7, PI32, many_files_inno
 from tests.formats.pe_build import P64, PT64
 from tests.formats.pe_build import p as pe_patch
 
@@ -387,7 +387,30 @@ def test_info_pe32_inno_text_notes_t34(tmp_path: Path, capsys: pytest.CaptureFix
     assert main(["info", _file(tmp_path, PI32)]) == 0
     notes = [line for line in capsys.readouterr().out.splitlines() if line.startswith("note:")]
     assert notes == [
-        "note:   inno setup headers, entries and data chunks not decompressed or parsed "
+        "note:   inno version 6.4.0.1 unsupported: headers not parsed",
+        "note:   inno data chunks, slices and non-file entries not extracted or reported "
         "in this version",
         _P64_TEXT[-1],
     ]
+
+
+def test_info_json_golden_pe32_inno_files_t83(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["info", _file(tmp_path, G7), "--json"]) == 0
+    out, err = capsys.readouterr()
+    assert out.encode("ascii") == (FIXTURES / "pe32_inno_files.json").read_bytes()
+    assert err == ""
+
+
+def test_info_inno_file_finding_size_t80(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["info", _file(tmp_path, many_files_inno()), "--json"]) == 0
+    out, err = capsys.readouterr()
+    assert err == ""
+    report = json.loads(out)
+    files = [f for f in report["findings"] if f["subject"].endswith(":file_entry")]
+    assert len(files) == 1024
+    sizes = [len(json.dumps(f, indent=2, sort_keys=True, ensure_ascii=True)) for f in files]
+    assert max(sizes) <= 4200

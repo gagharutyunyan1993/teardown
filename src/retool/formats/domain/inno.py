@@ -1,8 +1,8 @@
-"""Inno Setup loader structures (innoextract loader/offsets.cpp, setup/version.cpp, block.cpp).
+"""Inno Setup loader structures, block headers and the decoded setup data VOs.
 
-Leaf module: imports only ``shared`` and stdlib; pure parsers over bytes the caller has read
-with explicit sizes. CRC32 checks verify checksum fields the container declares over spans
-it defines; no payload byte is decompressed or interpreted.
+Imports ``shared``, stdlib, ``decompress``, ``inno_setup``, ``inno_files``. Header blocks are
+decompressed only via ``decompress.py`` (ADR 0003); file data never. Loader layouts follow
+innoextract loader/offsets.cpp, setup/version.cpp, block.cpp.
 """
 
 from __future__ import annotations
@@ -16,6 +16,9 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Final
 
+from retool.formats.domain.decompress import Codec, DecodeFailure
+from retool.formats.domain.inno_files import InnoFile
+from retool.formats.domain.inno_setup import InnoHeader
 from retool.shared import Address, ParseError
 
 type Version = tuple[int, int, int, int]  # (major, minor, patch, build), each 0..255
@@ -27,6 +30,8 @@ LEGACY_STAMP_SIZE: Final = 12
 BLOCK_HEADER_SIZE: Final = 9
 CHUNK_MAGIC: Final = b"zlb\x1a"
 EXPECTED_REVISION: Final = 1
+SUPPORTED_SETUP_VERSION: Final = (6, 4, 3, 0)
+MAX_INNO_FILE_FINDINGS: Final = 1024
 
 _U32_MAX: Final = 0xFFFFFFFF
 BLOCKS_FROM: Final = (4, 0, 9, 0)
@@ -202,13 +207,42 @@ class InnoData:
 
 
 @dataclass(frozen=True, slots=True)
+class InnoDecodeStatus:
+    """How one header block decode ended: ended, unterminated or a failure kind."""
+
+    index: int
+    codec: Codec
+    ended: bool
+    failure: DecodeFailure | None
+    decoded_size: int
+    consumed: int | None
+    trailing: int | None
+
+    def __post_init__(self) -> None:
+        if self.failure is not None:
+            ok = not self.ended and self.consumed is None and self.trailing is None
+        else:
+            ok = (
+                self.consumed is not None
+                and self.trailing is not None
+                and self.consumed >= 0
+                and self.trailing >= 0
+            )
+        if not (ok and self.index in (1, 2) and self.decoded_size >= 0):
+            raise ParseError("inno decode status inconsistent")
+
+
+@dataclass(frozen=True, slots=True)
 class InnoInfo:
-    """What the Inno loader structures declare, up to the first data chunk magic."""
+    """What the Inno loader structures declare, plus the decoded setup header and file list."""
 
     offsets: InnoOffsets
     version: InnoVersion | None
     blocks: tuple[InnoBlockHeader, ...]
     data: InnoData | None
+    header: InnoHeader | None = None
+    files: tuple[InnoFile, ...] = ()
+    decode: tuple[InnoDecodeStatus, ...] = ()
 
     def __post_init__(self) -> None:
         if not (
@@ -217,6 +251,17 @@ class InnoInfo:
             and (
                 not self.blocks
                 or (self.version is not None and self.version.version >= BLOCKS_FROM)
+            )
+            and len(self.decode) <= len(self.blocks)
+            and all(d.index == i + 1 for i, d in enumerate(self.decode))
+            and (self.header is None or (len(self.decode) > 0 and self.decode[0].failure is None))
+            and (
+                not self.files
+                or (
+                    self.header is not None
+                    and len(self.files) == self.header.num_files
+                    and len(self.decode) == 2
+                )
             )
         ):
             raise ParseError("inno info inconsistent")

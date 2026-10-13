@@ -198,7 +198,7 @@ def test_parser_registry_pe() -> None:
 
 def test_inspect_file_pe_fields() -> None:
     info = InspectFile(MemorySource(P64)).execute()
-    assert info.stage_version == "5"
+    assert info.stage_version == "6"
     assert info.arch == ArchitectureId("x86_64")
     assert info.entry == sa(ram, 0x140001000)
     assert info.segments == (
@@ -296,7 +296,7 @@ def test_t33_pi32_findings_match_golden() -> None:
     findings, notes = _pi32_facts()
     golden_findings, golden_notes = _golden("pe32_inno.json")
     assert findings == golden_findings
-    assert notes == golden_notes[1:]  # the inno note comes from attach_tables
+    assert notes == golden_notes[2:]  # the two inno notes (N1, not parsed) come from attach_tables
     assert [f.subject for f in findings][-8:] == [
         "pe.overlay",
         "pe.signature",

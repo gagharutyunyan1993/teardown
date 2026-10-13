@@ -35,7 +35,7 @@ def test_format_facts_raw() -> None:
 def test_inspect_file_stage_fields() -> None:
     info = InspectFile(MemorySource(b"\x7fELF" + b"\0" * 60)).execute()
     assert info.stage == InspectFile.STAGE == "formats.inspect"
-    assert info.stage_version == "5"
+    assert info.stage_version == "6"
     assert info.findings == (
         Finding(
             "input",
