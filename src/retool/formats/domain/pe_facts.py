@@ -9,15 +9,15 @@ from retool.formats.domain.facts import magic_finding, parsed_finding
 from retool.formats.domain.image import Image
 from retool.formats.domain.model import Format
 from retool.formats.domain.parsing import display_name
-from retool.formats.domain.pe import PeFile
+from retool.formats.domain.pe import ImportedDll, ImportedFunction, OverlayInfo, PeFile
 from retool.formats.domain.pe_image import pe_arch
 from retool.shared import Finding, JsonValue, NotAnalysed
 
 ENTRY_OUTSIDE_NOTE = "pe entry point outside every mapped section"
 STRING_TABLE_NOTE = "pe section names referencing the COFF string table not resolved"
 NOT_PARSED_NOTE = (
-    "pe imports, exports, relocations, resources, certificates, debug data, CLR metadata and COFF "
-    "symbols not parsed in this version"
+    "pe exports, relocations, resources, delay-load and bound imports, certificate contents, "
+    "debug data, CLR metadata and COFF symbols not parsed in this version"
 )
 
 _STRING_TABLE_NAME: Final = re.compile(rb"/[0-9]+")
@@ -83,10 +83,50 @@ def _optional(pe: PeFile) -> JsonValue:
     return value
 
 
+def _function(f: ImportedFunction) -> JsonValue:
+    if f.name is None:
+        return {"ordinal": f.ordinal}
+    value: dict[str, JsonValue] = {"hint": f.hint, "name": display_name(f.name)}
+    if f.name_truncated:
+        value["name_truncated"] = True
+    return value
+
+
+def _import(index: int, dll: ImportedDll) -> JsonValue:
+    value: dict[str, JsonValue] = {
+        "index": index,
+        "descriptor_offset": dll.descriptor_offset.value,
+        "dll": display_name(dll.name) if dll.name is not None else None,
+    }
+    if dll.name_truncated:
+        value["dll_truncated"] = True
+    value |= {
+        "ilt_rva": dll.ilt_rva,
+        "time_date_stamp": dll.time_date_stamp,
+        "forwarder_chain": dll.forwarder_chain,
+        "name_rva": dll.name_rva,
+        "iat_rva": dll.iat_rva,
+        "functions": [_function(f) for f in dll.functions],
+        "end": dll.end.value,
+    }
+    return value
+
+
+def _overlay(overlay: OverlayInfo) -> JsonValue:
+    cert = overlay.certificate
+    return {
+        "offset": overlay.offset.value,
+        "size": overlay.size,
+        "certificate": {"offset": cert.start, "size": cert.size} if cert is not None else None,
+        "payload_size": overlay.payload_size,
+        "trailing_size": overlay.trailing_size,
+    }
+
+
 def pe_facts(
     pe: PeFile, image: Image | None, producer: str
 ) -> tuple[tuple[Finding, ...], tuple[NotAnalysed, ...]]:
-    """Findings for the PE headers and section table, and the markers of what was not analysed."""
+    """Findings for the PE headers, sections and attached tables, and what was not analysed."""
     findings = [
         magic_finding(Format.PE, producer),
         parsed_finding("pe.header", _header(pe), producer),
@@ -107,6 +147,27 @@ def pe_facts(
             "characteristics": s.characteristics,
         }
         findings.append(parsed_finding("pe.section", section, producer))
+    findings.extend(
+        parsed_finding("pe.import", _import(index, dll), producer)
+        for index, dll in enumerate(pe.imports)
+    )
+    for index, cert in enumerate(pe.certificates):
+        value: JsonValue = {
+            "index": index,
+            "offset": cert.offset.value,
+            "length": cert.length,
+            "revision": cert.revision,
+            "type": cert.certificate_type,
+        }
+        findings.append(parsed_finding("pe.certificate", value, producer))
+    if pe.overlay is not None:
+        findings.append(parsed_finding("pe.overlay", _overlay(pe.overlay), producer))
+        findings.extend(
+            parsed_finding(
+                "pe.signature", {"signature": m.name, "offset": m.offset.value}, producer
+            )
+            for m in pe.overlay.signatures
+        )
     notes: list[NotAnalysed] = []
     if image is not None and pe.optional.address_of_entry_point != 0 and image.entry is None:
         notes.append(NotAnalysed(ENTRY_OUTSIDE_NOTE))

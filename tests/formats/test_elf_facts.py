@@ -120,7 +120,7 @@ def test_parser_registry() -> None:
 
 def test_inspect_file_elf_fields() -> None:
     info = InspectFile(MemorySource(F64)).execute()
-    assert info.stage_version == "3"
+    assert info.stage_version == "4"
     assert info.arch == ArchitectureId("x86_64")
     assert info.entry == sa(ram, 0x4000B0)
     assert info.segments == (

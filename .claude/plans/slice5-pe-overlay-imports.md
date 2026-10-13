@@ -185,6 +185,7 @@ per raw byte; JSON escapes its backslash -> <= 5.
   8 MiB. Worst document (scratch run): 32 DLLs x 512 functions (10,922 with 24-byte \xff names = 262,128 name bytes, the rest
   ordinals) + 224 DLLs without functions, every DLL name 256 \xff bytes (imports 2,900,920 chars) + 96 sections named
   b"\xff"*8 + 16 notes of 256 chars = 2,972,647 chars = 35 % of MAX_REPORT_CHARS.
+- Import read budget: each name thunk charges max(len(name), 3) to IMPORT_DLL_NAME_BYTES; parse_imports reads <= MAX_IMPORT_READ_BYTES = 20*257 + 256*(257 + 8*513) + 16384*259 = 5,365,012 B (test pins it).
 - MAX_CERTS 16 (assumption; nested Authenticode signatures live inside one entry); reads <= 128 bytes.
 - Findings <= 3 + 96 + 256 + 16 + 1 + 13 (2 windows x 6 rows + 1 file row) = 385 << 4096; MAX_SIGNATURE_MATCHES 16 >= 13.
 
@@ -294,7 +295,7 @@ at 0x2A00 + 0x20k, DLL name 300 x b"\xff" + NUL at 0x6A00.
 `tests/formats/test_pe_certificates.py`:
 28. PT64 -> (CertificateEntry(Address(0x20600), 12, 0x200, 2),), notes (); P64 -> ((), ()); dir4 (0x600, 0) and (0, 16) ->
     ((), ()), no read.
-29. Rounding: entries dwLength 9 then 8 appended to P64, Size 24 -> offsets 0x600, 0x610; Size 17 -> C7 @0xe8.
+29. Rounding: entries dwLength 9 then 8 appended to P64, Size 24 -> offsets 0x600, 0x610; Size 17 -> C4 'certificate header exceeds table' @0x610; Size 12 -> C7 @0xe8.
 30. C2 (VA + Size = size + 1; 0xFFFFFFFF/0xFFFFFFFF) @0xe8; C4 Size 4 @VA; C5 dwLength 7 and 0 @VA; C6 0xFFFFFFFF @VA; a
     failing second entry @its offset.
 31. C3: 17 entries of 8 bytes (Size 136) -> 16 + note "pe certificates truncated at 16 entries"; 16 entries -> no note.

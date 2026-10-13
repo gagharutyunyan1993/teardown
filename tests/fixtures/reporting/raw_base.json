@@ -31,8 +31,8 @@
   "stages": [
     {
       "name": "formats.inspect",
-      "sha256": "9debe8d1056c03b65c288b30d754254eb4b88e81dda71d754bcccb4f4181caf4",
-      "version": "3"
+      "sha256": "e43d7d9e1b5e01c2929584639cf17a8823d67996c119349d51fc320b845fbfc7",
+      "version": "4"
     },
     {
       "name": "formats.raw",

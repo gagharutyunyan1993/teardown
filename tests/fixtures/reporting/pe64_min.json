@@ -203,6 +203,28 @@
         "reason": "",
         "status": "unverified"
       }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.import",
+      "value": {
+        "descriptor_offset": 1024,
+        "dll": "MZ",
+        "end": "unmapped",
+        "forwarder_chain": 0,
+        "functions": [],
+        "iat_rva": 0,
+        "ilt_rva": 286331153,
+        "index": 0,
+        "name_rva": 0,
+        "time_date_stamp": 286331153
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
     }
   ],
   "input": {
@@ -211,7 +233,7 @@
   },
   "not_analysed": [
     {
-      "reason": "pe imports, exports, relocations, resources, certificates, debug data, CLR metadata and COFF symbols not parsed in this version",
+      "reason": "pe exports, relocations, resources, delay-load and bound imports, certificate contents, debug data, CLR metadata and COFF symbols not parsed in this version",
       "stage": "formats.inspect"
     }
   ],
@@ -220,8 +242,8 @@
   "stages": [
     {
       "name": "formats.inspect",
-      "sha256": "7fdf857f1f389f331c0b25235ee798244b9736cc3de62a2982f427d093befe3e",
-      "version": "3"
+      "sha256": "5ffb824bc5b7e98d1972b7bad8766bb464f082d94daab7eb903bf73b32b107ba",
+      "version": "4"
     }
   ]
 }

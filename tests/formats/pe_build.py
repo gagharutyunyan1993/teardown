@@ -5,8 +5,26 @@ from __future__ import annotations
 import struct
 
 from tests.formats.elf_build import patch
+from tests.formats.fakes import SparseSource
 
-__all__ = ["P32", "P64", "build_pe", "name", "p", "p32", "patch"]
+__all__ = [
+    "P32",
+    "P64",
+    "PT32",
+    "PT64",
+    "REAL_CERT",
+    "REAL_SIZE",
+    "big_data",
+    "build_pe",
+    "build_pe_tables",
+    "dir_at",
+    "name",
+    "p",
+    "p32",
+    "patch",
+    "real_shape",
+    "rva",
+]
 
 
 def _align_up(value: int, align: int) -> int:
@@ -90,3 +108,75 @@ def p32(*patches: tuple[int, int]) -> bytes:
 def name(data: bytes, off: int, raw: bytes) -> bytes:
     """``data`` with the 8-byte section name at ``off`` replaced by ``raw`` (NUL-padded)."""
     return data[:off] + raw.ljust(8, b"\0") + data[off + 8 :]
+
+
+def dir_at(index: int, bits: int = 64) -> int:
+    """File offset of data directory entry ``index`` in ``build_pe(bits)`` (e_lfanew 0x40)."""
+    return 0x58 + (112 if bits == 64 else 96) + 8 * index
+
+
+def rva(offset: int) -> int:
+    """RVA of a file offset inside .data of P64-shaped images (.data at file 0x400, RVA 0x2000)."""
+    return offset + 0x1C00
+
+
+def _thunks(values: list[int], bits: int) -> bytes:
+    return b"".join(struct.pack("<Q" if bits == 64 else "<I", v) for v in values)
+
+
+def build_pe_tables(bits: int = 64) -> bytes:
+    """PT64 / PT32: build_pe(bits) + two import descriptors, a certificate and an overlay."""
+    buf = bytearray(build_pe(bits))
+    flag = 1 << (63 if bits == 64 else 31)
+    struct.pack_into("<II", buf, dir_at(1, bits), 0x2000, 0x3C)
+    struct.pack_into("<5I", buf, 0x400, 0x2040, 0, 0, 0x20C0, 0x2080)
+    struct.pack_into("<5I", buf, 0x414, 0, 0, 0, 0x20D0, 0x20A0)
+    buf[0x428:0x43C] = bytes(20)
+    for at in (0x440, 0x480):
+        thunks = _thunks([0x20E0, flag | 16, 0], bits)
+        buf[at : at + len(thunks)] = thunks
+    thunks = _thunks([0x20F0, 0], bits)
+    buf[0x4A0 : 0x4A0 + len(thunks)] = thunks
+    buf[0x4C0:0x4CD] = b"KERNEL32.dll\0"
+    buf[0x4D0:0x4DB] = b"USER32.dll\0"
+    buf[0x4E0:0x4EE] = struct.pack("<H", 0x123) + b"ExitProcess\0"
+    buf[0x4F0:0x4FE] = struct.pack("<H", 2) + b"MessageBoxA\0"
+    struct.pack_into("<II", buf, dir_at(4, bits), 0x20600, 0x10)
+    overlay = (
+        b"7z\xbc\xaf\x27\x1c"
+        + bytes(65530)
+        + bytes(range(256)) * 256
+        + struct.pack("<IHH", 12, 0x200, 2)
+        + b"\x30\x82\0\0"
+        + bytes(4)
+        + b"PK\x03\x04"
+        + bytes(12)
+    )
+    return bytes(buf) + overlay
+
+
+PT64 = build_pe_tables()
+PT32 = build_pe_tables(32)
+
+
+def big_data(raw: int) -> bytes:
+    """P64 headers with .data grown to ``raw`` zero bytes at file 0x400 (VS = SizeOfRawData)."""
+    data = P64[:0x400] + bytes(raw)
+    return p((0x178, raw), (0x180, raw), data=data)
+
+
+REAL_SIZE = 139821624
+REAL_CERT = (139811888, 9736)
+
+
+def real_shape() -> SparseSource:
+    """The real sample's shape: PE32, 11 sections, raw end 0xd3e00, a 9736-byte certificate."""
+    head = build_pe(32, extra_sections=9)
+    head = patch(head, dir_at(1, 32), "<I", 0)
+    head = patch(head, dir_at(1, 32) + 4, "<I", 0)
+    head = patch(head, 0x168, "<I", 0xD3E00 - 0x600)
+    head = patch(head, 0x170, "<I", 0xD3E00 - 0x600)
+    head = patch(head, dir_at(4, 32), "<I", REAL_CERT[0])
+    head = patch(head, dir_at(4, 32) + 4, "<I", REAL_CERT[1])
+    tail = struct.pack("<IHH", 9729, 0x200, 2).ljust(REAL_CERT[1], b"\0")
+    return SparseSource(REAL_SIZE, head=head, tail=tail)

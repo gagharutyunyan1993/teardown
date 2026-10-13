@@ -8,7 +8,7 @@ from retool.interface.cli import main as cli_main
 from retool.interface.cli.main import main
 from tests.formats.elf_build import build_elf
 from tests.formats.fakes import MemorySource, ShrinkingSource
-from tests.formats.pe_build import P64
+from tests.formats.pe_build import P64, PT64
 from tests.formats.pe_build import p as pe_patch
 
 
@@ -325,8 +325,8 @@ _P64_TEXT = [
     "segment sec1: ram:0x140002000 mem=0x1000 file=0x400+0x200",
     'section 0 ".text" code addr=0x140001000 off=0x200 size=0x10',
     'section 1 ".data" data addr=0x140002000 off=0x400 size=0x1000',
-    "note:   pe imports, exports, relocations, resources, certificates, debug data, "
-    "CLR metadata and COFF symbols not parsed in this version",
+    "note:   pe exports, relocations, resources, delay-load and bound imports, "
+    "certificate contents, debug data, CLR metadata and COFF symbols not parsed in this version",
 ]
 
 
@@ -338,10 +338,25 @@ def test_info_pe_text(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> Non
 
 
 def test_info_json_golden_pe64(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # The "MZ" pe.import is deliberate: P64's .data starts with 8 x 0x11 and Name RVA 0 maps
+    # into the headers, so this golden pins hostile-descriptor handling (slice-5 spec, ## CLI).
     assert main(["info", _file(tmp_path, P64), "--json"]) == 0
     out, err = capsys.readouterr()
     assert out.encode("ascii") == (FIXTURES / "pe64_min.json").read_bytes()
     assert err == ""
+
+
+def test_info_json_golden_pe64_tables(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["info", _file(tmp_path, PT64), "--json"]) == 0
+    out, err = capsys.readouterr()
+    assert out.encode("ascii") == (FIXTURES / "pe64_tables.json").read_bytes()
+    assert err == ""
+
+
+def test_info_pe_tables_text(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["info", _file(tmp_path, PT64)]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[3:] == _P64_TEXT
 
 
 def test_info_pe_rejected_structure_note(

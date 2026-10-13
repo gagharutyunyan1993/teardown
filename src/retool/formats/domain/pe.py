@@ -9,14 +9,32 @@ from __future__ import annotations
 
 import struct
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Final
 
 from retool.formats.domain.parsing import read_exact
 from retool.formats.domain.ports import ByteSource
-from retool.shared import Address, ParseError
+from retool.shared import Address, ByteRange, ParseError
 
 MAX_SECTIONS: Final = 96
 MAX_DIRS: Final = 16
+MAX_IMPORT_DLLS: Final = 256
+MAX_IMPORT_FUNCS: Final = 512
+MAX_IMPORT_NAME: Final = 256
+IMPORT_DLL_NAME_BYTES: Final = 12288
+MAX_IMPORT_FUNCS_TOTAL: Final = 16384
+IMPORT_TOTAL_NAME_BYTES: Final = 262144
+MAX_CERTS: Final = 16
+SIGNATURE_WINDOW: Final = 64
+MAX_SIGNATURE_MATCHES: Final = 16
+# Worst-case bytes parse_imports reads: the descriptor table (20 x 257), per DLL its name
+# window (257) and thunk array (8 x 513), and one hint/name window (2 + 256 + 1) per listed
+# function: 20*(DLLS+1) + DLLS*((NAME+1) + 8*(FUNCS+1)) + FUNCS_TOTAL*(2+NAME+1) = 5,365,012.
+MAX_IMPORT_READ_BYTES: Final = (
+    20 * (MAX_IMPORT_DLLS + 1)
+    + MAX_IMPORT_DLLS * ((MAX_IMPORT_NAME + 1) + 8 * (MAX_IMPORT_FUNCS + 1))
+    + MAX_IMPORT_FUNCS_TOTAL * (2 + MAX_IMPORT_NAME + 1)
+)
 
 PE32_MAGIC: Final = 0x10B
 PE32PLUS_MAGIC: Final = 0x20B
@@ -43,6 +61,7 @@ _DIR_SIZE: Final = 8
 _SEC_FMT: Final = "<8sIIIIIIHHI"
 _SEC_SIZE: Final = 40
 _NAME_SIZE: Final = 8
+_U16_MAX: Final = 0xFFFF
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,22 +159,163 @@ class PeSection:
     characteristics: int
 
 
+class ThunkEnd(StrEnum):
+    """Why the walk of one DLL's thunk array stopped."""
+
+    NULL = "null"  # terminating zero thunk
+    CAP = "cap"  # a per-DLL or global budget was reached
+    DATA_END = "data_end"  # the file-backed run ended
+    UNMAPPED = "unmapped"  # an RVA is not file-backed (or a bound/corrupt PE32+ thunk)
+
+
+@dataclass(frozen=True, slots=True)
+class ImportedFunction:
+    """One import: by ``ordinal``, or by ``hint`` and ``name`` (bytes before the NUL)."""
+
+    ordinal: int | None
+    hint: int | None
+    name: bytes | None
+    name_truncated: bool = False
+
+    def __post_init__(self) -> None:
+        if self.ordinal is not None:
+            ok = self.hint is None and self.name is None and 0 <= self.ordinal <= _U16_MAX
+        else:
+            ok = (
+                self.hint is not None
+                and self.name is not None
+                and 0 <= self.hint <= _U16_MAX
+                and len(self.name) <= MAX_IMPORT_NAME
+            )
+        if not ok or (self.name_truncated and self.name is None):
+            raise ParseError("invalid imported function")
+
+
+def function_name_bytes(functions: tuple[ImportedFunction, ...]) -> int:
+    """Total name bytes of ``functions`` (ordinal imports count 0)."""
+    return sum(len(f.name) for f in functions if f.name is not None)
+
+
+@dataclass(frozen=True, slots=True)
+class ImportedDll:
+    """One import descriptor, its DLL name and the functions read from its thunk array."""
+
+    descriptor_offset: Address
+    ilt_rva: int
+    time_date_stamp: int
+    forwarder_chain: int
+    name_rva: int
+    iat_rva: int
+    name: bytes | None
+    name_truncated: bool
+    functions: tuple[ImportedFunction, ...]
+    end: ThunkEnd
+
+    def __post_init__(self) -> None:
+        if not (
+            len(self.functions) <= MAX_IMPORT_FUNCS
+            and function_name_bytes(self.functions) <= IMPORT_DLL_NAME_BYTES
+            and (self.name is None or len(self.name) <= MAX_IMPORT_NAME)
+            and not (self.name_truncated and self.name is None)
+        ):
+            raise ParseError("invalid imported DLL")
+
+
+@dataclass(frozen=True, slots=True)
+class CertificateEntry:
+    """WIN_CERTIFICATE header; ``length`` includes the 8-byte header, contents are not read."""
+
+    offset: Address
+    length: int
+    revision: int
+    certificate_type: int
+
+    def __post_init__(self) -> None:
+        if self.length < 8:
+            raise ParseError("certificate length below header size")
+
+
+@dataclass(frozen=True, slots=True)
+class SignatureMatch:
+    """A fixed-byte magic of the signature table found at a file offset."""
+
+    name: str
+    offset: Address
+
+
+@dataclass(frozen=True, slots=True)
+class OverlayInfo:
+    """File bytes past the image: payload, then the certificate table, then trailing bytes."""
+
+    offset: Address
+    size: int
+    certificate: ByteRange | None
+    payload_size: int
+    trailing_size: int
+    signatures: tuple[SignatureMatch, ...]
+
+    def __post_init__(self) -> None:
+        cert_size = self.certificate.size if self.certificate is not None else 0
+        if not (
+            self.size >= 1
+            and self.payload_size >= 0
+            and self.trailing_size >= 0
+            and self.payload_size + cert_size + self.trailing_size == self.size
+            and (self.certificate is not None or self.trailing_size == 0)
+            and (
+                self.certificate is None
+                or self.certificate.start == self.offset.value + self.payload_size
+            )
+            and len(self.signatures) <= MAX_SIGNATURE_MATCHES
+        ):
+            raise ParseError("overlay sizes inconsistent")
+
+
 @dataclass(frozen=True, slots=True)
 class PeFile:
-    """Immutable snapshot of a parsed PE: headers, data directories and sections in file order."""
+    """Immutable snapshot of a parsed PE: headers, data directories and sections in file order,
+    plus the import, certificate and overlay tables attached after the headers are parsed."""
 
     dos: DosHeader
     coff: CoffHeader
     optional: OptionalHeader
     directories: tuple[DataDirectory, ...]
     sections: tuple[PeSection, ...]
+    imports: tuple[ImportedDll, ...] = ()
+    certificates: tuple[CertificateEntry, ...] = ()
+    overlay: OverlayInfo | None = None
 
     def __post_init__(self) -> None:
         if not (
             len(self.sections) == self.coff.number_of_sections <= MAX_SECTIONS
             and len(self.directories) == min(self.optional.number_of_rva_and_sizes, MAX_DIRS)
+            and len(self.imports) <= MAX_IMPORT_DLLS
+            and len(self.certificates) <= MAX_CERTS
+            and sum(len(d.functions) for d in self.imports) <= MAX_IMPORT_FUNCS_TOTAL
+            and sum(function_name_bytes(d.functions) for d in self.imports)
+            <= IMPORT_TOTAL_NAME_BYTES
         ):
             raise ParseError("PE table counts inconsistent")
+
+
+def directory(pe: PeFile, index: int) -> DataDirectory | None:
+    """Data directory ``index`` if present (VirtualAddress and Size both non-zero)."""
+    if index >= len(pe.directories):
+        return None
+    entry = pe.directories[index]
+    return entry if entry.virtual_address != 0 and entry.size != 0 else None
+
+
+def directory_offset(pe: PeFile, index: int) -> int:
+    """File offset of data directory entry ``index``."""
+    fixed = _LAYOUT64.size if pe.optional.bits == 64 else _LAYOUT32.size
+    return pe.dos.e_lfanew.value + _SIG_SIZE + _COFF_SIZE + fixed + _DIR_SIZE * index
+
+
+def section_table_end(pe: PeFile) -> int:
+    """File offset just past the section table."""
+    table_at = pe.dos.e_lfanew.value + _SIG_SIZE + _COFF_SIZE + pe.coff.size_of_optional_header
+    return table_at + _SEC_SIZE * pe.coff.number_of_sections
 
 
 def pe_section_kind(characteristics: int) -> str:

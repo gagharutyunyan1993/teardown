@@ -1,0 +1,349 @@
+{
+  "findings": [
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "input",
+      "value": {
+        "magic": "pe"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.header",
+      "value": {
+        "arch": "x86_64",
+        "characteristics": 34,
+        "e_lfanew": 64,
+        "machine": 34404,
+        "number_of_sections": 2,
+        "number_of_symbols": 0,
+        "pointer_to_symbol_table": 0,
+        "size_of_optional_header": 240,
+        "time_date_stamp": 1593835520
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.optional",
+      "value": {
+        "address_of_entry_point": 4096,
+        "base_of_code": 4096,
+        "checksum": 12648430,
+        "data_directories": [
+          {
+            "index": 0,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 1,
+            "size": 60,
+            "virtual_address": 8192
+          },
+          {
+            "index": 2,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 3,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 4,
+            "size": 16,
+            "virtual_address": 132608
+          },
+          {
+            "index": 5,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 6,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 7,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 8,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 9,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 10,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 11,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 12,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 13,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 14,
+            "size": 0,
+            "virtual_address": 0
+          },
+          {
+            "index": 15,
+            "size": 0,
+            "virtual_address": 0
+          }
+        ],
+        "dll_characteristics": 33120,
+        "file_alignment": 512,
+        "format": "pe32+",
+        "image_base": 5368709120,
+        "loader_flags": 0,
+        "magic": 523,
+        "major_image_version": 2,
+        "major_linker_version": 14,
+        "major_os_version": 6,
+        "major_subsystem_version": 5,
+        "minor_image_version": 3,
+        "minor_linker_version": 36,
+        "minor_os_version": 1,
+        "minor_subsystem_version": 4,
+        "number_of_rva_and_sizes": 16,
+        "section_alignment": 4096,
+        "size_of_code": 512,
+        "size_of_headers": 512,
+        "size_of_heap_commit": 8192,
+        "size_of_heap_reserve": 524288,
+        "size_of_image": 12288,
+        "size_of_initialized_data": 512,
+        "size_of_stack_commit": 4096,
+        "size_of_stack_reserve": 1048576,
+        "size_of_uninitialized_data": 0,
+        "subsystem": 3,
+        "win32_version_value": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.section",
+      "value": {
+        "characteristics": 1610612768,
+        "index": 0,
+        "name": ".text",
+        "number_of_linenumbers": 0,
+        "number_of_relocations": 0,
+        "pointer_to_linenumbers": 0,
+        "pointer_to_raw_data": 512,
+        "pointer_to_relocations": 0,
+        "size_of_raw_data": 512,
+        "virtual_address": 4096,
+        "virtual_size": 16
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.section",
+      "value": {
+        "characteristics": 3221225536,
+        "index": 1,
+        "name": ".data",
+        "number_of_linenumbers": 0,
+        "number_of_relocations": 0,
+        "pointer_to_linenumbers": 0,
+        "pointer_to_raw_data": 1024,
+        "pointer_to_relocations": 0,
+        "size_of_raw_data": 512,
+        "virtual_address": 8192,
+        "virtual_size": 4096
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.import",
+      "value": {
+        "descriptor_offset": 1024,
+        "dll": "KERNEL32.dll",
+        "end": "null",
+        "forwarder_chain": 0,
+        "functions": [
+          {
+            "hint": 291,
+            "name": "ExitProcess"
+          },
+          {
+            "ordinal": 16
+          }
+        ],
+        "iat_rva": 8320,
+        "ilt_rva": 8256,
+        "index": 0,
+        "name_rva": 8384,
+        "time_date_stamp": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.import",
+      "value": {
+        "descriptor_offset": 1044,
+        "dll": "USER32.dll",
+        "end": "null",
+        "forwarder_chain": 0,
+        "functions": [
+          {
+            "hint": 2,
+            "name": "MessageBoxA"
+          }
+        ],
+        "iat_rva": 8352,
+        "ilt_rva": 0,
+        "index": 1,
+        "name_rva": 8400,
+        "time_date_stamp": 0
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.certificate",
+      "value": {
+        "index": 0,
+        "length": 12,
+        "offset": 132608,
+        "revision": 512,
+        "type": 2
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.overlay",
+      "value": {
+        "certificate": {
+          "offset": 132608,
+          "size": 16
+        },
+        "offset": 1536,
+        "payload_size": 131072,
+        "size": 131104,
+        "trailing_size": 16
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.signature",
+      "value": {
+        "offset": 1536,
+        "signature": "7z"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    },
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "pe.signature",
+      "value": {
+        "offset": 132624,
+        "signature": "zip-local"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    }
+  ],
+  "input": {
+    "sha256": "606bed2468d7857f728da6a180eec38c235db0a387e657bcae7dd1556b0c7900",
+    "size": 132640
+  },
+  "not_analysed": [
+    {
+      "reason": "pe exports, relocations, resources, delay-load and bound imports, certificate contents, debug data, CLR metadata and COFF symbols not parsed in this version",
+      "stage": "formats.inspect"
+    }
+  ],
+  "raw_image": null,
+  "schema_version": 1,
+  "stages": [
+    {
+      "name": "formats.inspect",
+      "sha256": "32c3999ba075b172968dfaacb5c67d6dc3a6df9e03a71a03196de75417f293d4",
+      "version": "4"
+    }
+  ]
+}

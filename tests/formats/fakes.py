@@ -23,11 +23,15 @@ class MemorySource:
 
 
 class SparseSource:
-    """ByteSource reporting ``size`` bytes without holding them: ``head`` then zeros."""
+    """ByteSource reporting ``size`` bytes without holding them: ``head``, zeros, then ``tail``.
 
-    def __init__(self, size: int, head: bytes = b"") -> None:
+    Bytes in ``[size - len(tail), size)`` come from ``tail``.
+    """
+
+    def __init__(self, size: int, head: bytes = b"", tail: bytes = b"") -> None:
         self._size = size
         self._head = head
+        self._tail = tail
         self.calls: list[tuple[int, int]] = []
 
     @property
@@ -39,8 +43,14 @@ class SparseSource:
         end = min(offset + size, self._size)
         if offset >= end:
             return b""
+        out = bytearray(end - offset)
         head = self._head[offset:end]
-        return head + bytes(end - offset - len(head))
+        out[: len(head)] = head
+        tail_at = self._size - len(self._tail)
+        low = max(offset, tail_at)
+        if low < end:
+            out[low - offset :] = self._tail[low - tail_at : end - tail_at]
+        return bytes(out)
 
 
 class ShrinkingSource:

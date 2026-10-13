@@ -38,6 +38,27 @@ def section_mem_size(section: PeSection) -> int:
     return section.virtual_size if section.virtual_size != 0 else section.size_of_raw_data
 
 
+def rva_to_file(pe: PeFile, rva: int) -> ByteRange | None:
+    """File-backed run of bytes starting at ``rva``; None if ``rva`` has no file bytes.
+
+    Mirrors ``_segment``: the first section in file order whose memory extent holds ``rva``
+    wins; its zero-filled tail is not file-backed. Outside every section, ``rva`` below
+    SizeOfHeaders maps to the headers at file offset ``rva``.
+    """
+    for section in pe.sections:
+        mem = section_mem_size(section)
+        if section.virtual_address <= rva < section.virtual_address + mem:
+            delta = rva - section.virtual_address
+            backed = min(section.size_of_raw_data, mem)
+            if delta < backed:
+                return ByteRange(section.pointer_to_raw_data.value + delta, backed - delta)
+            return None
+    headers = pe.optional.size_of_headers
+    if 0 <= rva < headers:
+        return ByteRange(rva, headers - rva)
+    return None
+
+
 def _segment(section: PeSection, index: int, space: AddressSpace, base: int) -> MappedSegment:
     mem = section_mem_size(section)
     length = min(section.size_of_raw_data, mem)
