@@ -8,3 +8,4 @@
 - 2026-10-12 researcher workers hit the 15-turn limit on dossiers with 10+ fetches; brief them with max 8 fetches and tell them to write after the budget, or split the dossier in two
 - 2026-10-12 CLI ints parsed with int(x, 0) have no digit limit for hex, but formatting them in decimal inside error messages hits the 4300-digit ValueError; bound parsed ints to 64 bits in the interface before bu
 - 2026-10-12 a parser that caps per-record names must be sized against the report limits: ELF with 3072 sections and 1024-byte names overflowed MAX_REPORT_CHARS; MAX_SECTION_NAME was lowered to 256 so render_json 
+- 2026-10-13 planner specs for parser slices hit the 25-turn limit twice; brief planners with max 12 files to read and tell them to write the spec after 15 tool calls, leaving unknowns as assumptions
