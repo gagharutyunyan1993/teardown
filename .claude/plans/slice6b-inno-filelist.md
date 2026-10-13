@@ -73,8 +73,8 @@ class Cursor:   # __slots__; label e.g. "block1"; 0 <= start <= limit <= len(dat
     pos: int (property); remaining: int (property)
     def read_fixed(self, size: int) -> bytes; def read_i32(self) -> int
     def read_string(self) -> bytes   # raw UTF-16LE (S1-S4); def read_ansi(self) -> bytes  (S1, S2, S4)
-class RecordSpec: name: str; count_index: int; strings: int; ansi: int; fixed: int   # frozen VO; all >= 0
-SETUP_HEADER_643: Final = RecordSpec("setup_header", -1, 33, 4, 177)   # count_index -1 = not a list
+class RecordSpec: name: str; count_index: int | None; strings: int; ansi: int; fixed: int   # frozen VO; ints >= 0
+SETUP_HEADER_643: Final = RecordSpec("setup_header", None, 33, 4, 177)   # count_index None = not a list
 LISTS_643: Final[tuple[RecordSpec, ...]]                 # 15 lists in stream order (## Binary layout)
 class Record: decoded_offset: int; strings: tuple[bytes, ...]; ansi: tuple[bytes, ...]; fixed: bytes   # VO
 def read_record(cur: Cursor, spec: RecordSpec) -> Record
@@ -174,10 +174,18 @@ default; acceptance M1 is the proof).
   Options are kept raw (6 B); no bit is interpreted (the position of shEncryptionUsed is (assumption), not relied on).
 - **Set-size decision: 6 B** for Options (ceil(44/8)). Not switchable at runtime. Proven by acceptance step M1 on the
   sample (no N5 ⇒ exact end of block 1 and NumFile == entries); a 179-byte layout fails t66.
-- Lists after the header, in order (`LISTS_643`, strings/ansi/fixed): language 6/4/21, custom_message 2/0/4, permission
-  0/1/0, type 4/0/30, component 5/0/42, task 6/0/26, dir 7/0/27, **file 10/0/43**, icon 13/0/51, ini 10/0/21, registry
-  9/0/31, install_delete 7/0/21, uninstall_delete 7/0/21, run 13/0/27, uninstall_run 13/0/27 (src: brief Evidence;
-  file_location is block 2).
+- Lists after the header, in order (`LISTS_643`, strings/ansi; fixed B with its fields; all records packed, Integer 4,
+  Smallint 2, Boolean 1, Integer64 8, VD = TSetupVersionData 10) (src: issrc@is-6_4_3 `Projects/Src/Shared.Struct.pas`,
+  fetched 2026-10-13): language 6/4; 21 (LanguageID 4, 4 font sizes 16, RightToLeft 1) · custom_message 2/0; 4 ·
+  permission 0/1; 0 (Permissions AnsiString) · type 4/0; 30 (2 × VD 20, Options set(1) 1, Typ enum 1, Size 8) · component
+  5/0; 42 (ExtraDiskSpaceRequired 8, Level 4, Used 1, 2 × VD 20, Options set(5) 1, Size 8) · task 6/0; 26 (Level 4, Used
+  1, 2 × VD 20, Options set(5) 1) · dir 7/0; 27 (Attribs 4, 2 × VD 20, PermissionsEntry 2, Options set(5) 1) · **file
+  10/0; 43** · icon 13/0; 48 (TGUID 16, 2 × VD 20, IconIndex 4, ShowCmd 4, CloseOnExit enum 1, HotKey u16 2, Options
+  set(6) 1; was 51, M1 round 1: 13 × 4 + 48 = 100 B matches the sample) · ini 10/0; 21 (2 × VD 20, Options set(5) 1) ·
+  registry 9/0; 29 (2 × VD 20, RootKey HKEY 4 (assumption: 32-bit build), PermissionsEntry 2, Typ enum 1, Options set(12)
+  2) · install_delete, uninstall_delete 7/0; 21 (2 × VD 20, DeleteType enum 1) · run, uninstall_run 13/0; 27 (2 × VD 20,
+  ShowCmd 4, Wait enum 1, Options set(12) 2). Enum = 1 B and set packing remain (assumption) (proven on the sample by
+  M1); file_location is block 2.
 - Then wizard images twice: `N` i32 + N × (`size` i32 + size bytes) (assumption, R3). Then, only if compress_method ∈
   {1 ZIP, 2 BZIP}, the decompressor DLL: `size` i32 + size bytes (assumption). Then the block must end (S9).
 - TSetupFileEntry: 10 Strings ([0] SourceFilename, [1] DestName kept); fixed 43 B: 0 MinVersion 10, 10 OnlyBelow 10, 20
@@ -358,7 +366,8 @@ t83 G7 golden; G1-G6 goldens regenerated (review the diff: only stage version an
   `blocked` with the note text; no runtime fallback (a layout change is a spec change).
 - R2 unterminated LZMA1 may decode a few garbage bytes past the last real symbol (assumption, rc state after flush);
   S9 / SIZE_MISMATCH would then reject a legitimate block. M1 reveals it; resolution is an ADR 0003 "revisit" item.
-- R3 list record sizes come from the brief's Evidence; the wizard-image framing "N + sized blobs, twice" and the DLL
+- R3 list record sizes are sourced from `Shared.Struct.pas`@is-6_4_3 (icon corrected 51 → 48, registry 31 → 29 in fix
+  round 1); HKEY width and set packing stay (assumption). The wizard-image framing "N + sized blobs, twice" and the DLL
   framing are (assumption). M1 covers all but the DLL (sample is LZMA). R4 header counts unrelated to the file list are
   validated only by S5.
 - R5 1024 / 128 caps truncate large installers and long names (flagged); corpus measurement → F-DECOMP-CORPUS.
