@@ -7,3 +7,6 @@
 - 2026-10-11 A narrow grep pattern in a fetch brief makes the researcher report facts as unverified that the page does contain; on status partial widen the pattern before concluding the source lacks it
 - 2026-10-12 researcher workers hit the 15-turn limit on dossiers with 10+ fetches; brief them with max 8 fetches and tell them to write after the budget, or split the dossier in two
 - 2026-10-12 CLI ints parsed with int(x, 0) have no digit limit for hex, but formatting them in decimal inside error messages hits the 4300-digit ValueError; bound parsed ints to 64 bits in the interface before bu
+- 2026-10-12 a parser that caps per-record names must be sized against the report limits: ELF with 3072 sections and 1024-byte names overflowed MAX_REPORT_CHARS; MAX_SECTION_NAME was lowered to 256 so render_json 
+- 2026-10-13 planner specs for parser slices hit the 25-turn limit twice; brief planners with max 12 files to read and tell them to write the spec after 15 tool calls, leaving unknowns as assumptions
+- 2026-10-13 PE import walk worst case reads about 5.4 MB (16384 functions x 259-byte hint/name reads), pinned by MAX_IMPORT_READ_BYTES; lowering it needs two-step hint/name reads or a separate global read budget 

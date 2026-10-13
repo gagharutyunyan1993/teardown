@@ -5,7 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from retool.formats.domain.model import Format
-from retool.shared import ArchitectureId, SpaceAddress
+from retool.formats.domain.parsing import SectionSummary
+from retool.shared import ArchitectureId, Finding, NotAnalysed, SpaceAddress
 
 
 @dataclass(frozen=True, slots=True)
@@ -13,6 +14,14 @@ class FileInfo:
     size: int
     sha256: str
     format: Format
+    stage: str
+    stage_version: str
+    findings: tuple[Finding, ...]
+    not_analysed: tuple[NotAnalysed, ...]
+    arch: ArchitectureId | None = None
+    entry: SpaceAddress | None = None
+    segments: tuple[SegmentInfo, ...] = ()
+    sections: tuple[SectionSummary, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,3 +43,7 @@ class RawImageInfo:
     entry: SpaceAddress | None
     segments: tuple[SegmentInfo, ...]
     shadowed_format: Format | None
+    stage: str
+    stage_version: str
+    findings: tuple[Finding, ...]
+    not_analysed: tuple[NotAnalysed, ...]

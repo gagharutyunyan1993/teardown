@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from retool.shared.errors import ParseError
-from retool.shared.json_value import JsonValue
+from retool.shared.json_value import JsonValue, check_json_value
 
 MIN_LLM_CHECKS = 2
 MAX_CHECKS = 16
@@ -92,6 +92,7 @@ class Finding:
             raise ParseError(f"finding subject must be 1..{_MAX_TEXT} printable chars")
         if _PRODUCER.fullmatch(self.producer) is None:
             raise ParseError("invalid producer name")
+        check_json_value(self.value)
         if (
             self.provenance is Provenance.LLM_SUGGESTED
             and self.verification.status is Verification.Status.PASSED

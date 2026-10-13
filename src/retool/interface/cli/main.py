@@ -14,8 +14,11 @@ from retool.formats import (
     LoadRawImage,
     RawLoadSpec,
     RawSegmentSpec,
+    SegmentInfo,
 )
 from retool.formats.infrastructure.filesystem import FileByteSource
+from retool.reporting import RenderJsonReport
+from retool.reporting.infrastructure.formats_facts import FormatsFactSource
 from retool.shared import Address, AddressSpace, ArchitectureId, RetoolError, SpaceAddress
 
 _UNKNOWN_HINT = "unknown format; to load as a raw image use --raw --arch --base"
@@ -98,12 +101,31 @@ def _check_raw_usage(info: argparse.ArgumentParser, args: argparse.Namespace) ->
         info.error("--offset and --length require --base")
 
 
+def _print_segment(seg: SegmentInfo) -> None:
+    print(
+        f"segment {seg.name}: {seg.start} mem=0x{seg.mem_size:x} "
+        f"file=0x{seg.file_start:x}+0x{seg.file_size:x}"
+    )
+
+
 def _cmd_info(path: Path) -> int:
     info = InspectFile(FileByteSource(path)).execute()
     print(f"path:   {path}")
     print(f"size:   {info.size}")
     print(f"sha256: {info.sha256}")
     print(f"format: {info.format}")
+    if info.arch is not None:
+        print(f"arch:   {info.arch}")
+        print(f"entry:  {'none' if info.entry is None else info.entry}")
+    for seg in info.segments:
+        _print_segment(seg)
+    for sec in info.sections:
+        print(
+            f'section {sec.index} "{sec.name}" {sec.kind} addr=0x{sec.addr:x} '
+            f"off=0x{sec.offset:x} size=0x{sec.size:x}"
+        )
+    for note in info.not_analysed:
+        print(f"note:   {note.reason}")
     if info.format is Format.UNKNOWN:
         print(_UNKNOWN_HINT, file=sys.stderr)
     return 0
@@ -117,10 +139,7 @@ def _cmd_info_raw(path: Path, spec: RawLoadSpec) -> int:
     print(f"arch:   {info.arch}")
     print(f"entry:  {'none' if info.entry is None else info.entry}")
     for seg in info.segments:
-        print(
-            f"segment {seg.name}: {seg.start} mem=0x{seg.mem_size:x} "
-            f"file=0x{seg.file_start:x}+0x{seg.file_size:x}"
-        )
+        _print_segment(seg)
     if info.shadowed_format is not None:
         print(
             f"warning: input starts with {info.shadowed_format} magic; "
@@ -130,12 +149,18 @@ def _cmd_info_raw(path: Path, spec: RawLoadSpec) -> int:
     return 0
 
 
+def _cmd_info_json(path: Path, spec: RawLoadSpec | None) -> int:
+    sys.stdout.write(RenderJsonReport(FormatsFactSource(FileByteSource(path), spec)).execute())
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="retool")
     parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="command", required=True)
     info = sub.add_parser("info", help="basic facts about a file")
     info.add_argument("path", type=Path)
+    info.add_argument("--json", action="store_true", help="print a versioned JSON report")
     info.add_argument("--raw", action="store_true", help="load as a raw image (explicit only)")
     info.add_argument("--arch", help="architecture id, required with --raw")
     info.add_argument("--base", type=_int, help="load address of the single raw segment")
@@ -155,6 +180,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "info":
         _check_raw_usage(info, args)
         try:
+            if args.json:
+                return _cmd_info_json(args.path, _raw_spec(args) if args.raw else None)
             if args.raw:
                 return _cmd_info_raw(args.path, _raw_spec(args))
             return _cmd_info(args.path)

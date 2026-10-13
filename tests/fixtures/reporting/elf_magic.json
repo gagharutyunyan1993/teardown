@@ -1,0 +1,36 @@
+{
+  "findings": [
+    {
+      "producer": "formats.inspect",
+      "provenance": "parsed",
+      "subject": "input",
+      "value": {
+        "magic": "elf"
+      },
+      "verification": {
+        "checks": [],
+        "reason": "",
+        "status": "unverified"
+      }
+    }
+  ],
+  "input": {
+    "sha256": "cc9d6fac1f314ccbd3003c6a0e788a426958609b1312422d8fed40a08ee0bb51",
+    "size": 64
+  },
+  "not_analysed": [
+    {
+      "reason": "elf structure rejected: invalid EI_CLASS at offset 0x4",
+      "stage": "formats.inspect"
+    }
+  ],
+  "raw_image": null,
+  "schema_version": 1,
+  "stages": [
+    {
+      "name": "formats.inspect",
+      "sha256": "3b60e4b30da06d58cf31fb3e43099c23f3e1583362060abfdb9fc8c29ad13178",
+      "version": "5"
+    }
+  ]
+}

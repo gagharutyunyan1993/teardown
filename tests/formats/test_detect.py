@@ -40,3 +40,10 @@ _HEADS = (
 def test_detect_never_returns_raw() -> None:
     for head in _HEADS:
         assert detect(head) is not Format.RAW
+
+
+def test_magic_window_public() -> None:
+    from retool.formats.domain.services import MAGIC_WINDOW
+
+    assert MAGIC_WINDOW == 4
+    assert detect(b"\x7fELF"[:MAGIC_WINDOW]) is Format.ELF
