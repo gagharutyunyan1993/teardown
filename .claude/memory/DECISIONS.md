@@ -11,3 +11,4 @@
 - 2026-10-12 adding the ADR 0002 control 11 import-linter contracts before assist exists, with source_modules growing per context, is an editorial clarification of ARCHITECTURE.md section 7, not a superseding ADR,
 - 2026-10-12 F-SEGCAP: a PE or Mach-O with more than 63 mapped sections gets no image under ADR 0001 check 6 (MAX_SEGMENTS 64) and a note instead; raising the cap needs /decide and a superseding ADR, never a local
 - 2026-10-13 content measurements such as block entropy and predicate signatures like the zlib FCHECK rule belong to the analysis context, not formats; formats emits only structural facts and exact anchored magic 
+- 2026-10-13 fixed-layout structure of containers embedded in and located through a parsed format (Inno Setup loader table, version field, block headers inside a PE) is structural parsing in formats, bounds-checke
