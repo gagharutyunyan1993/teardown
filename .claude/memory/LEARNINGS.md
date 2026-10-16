@@ -10,3 +10,4 @@
 - 2026-10-12 a parser that caps per-record names must be sized against the report limits: ELF with 3072 sections and 1024-byte names overflowed MAX_REPORT_CHARS; MAX_SECTION_NAME was lowered to 256 so render_json 
 - 2026-10-13 planner specs for parser slices hit the 25-turn limit twice; brief planners with max 12 files to read and tell them to write the spec after 15 tool calls, leaving unknowns as assumptions
 - 2026-10-13 PE import walk worst case reads about 5.4 MB (16384 functions x 259-byte hint/name reads), pinned by MAX_IMPORT_READ_BYTES; lowering it needs two-step hint/name reads or a separate global read budget 
+- 2026-10-13 Inno Setup 6.4.3 layouts verified on a real installer (slice 6b M1): TSetupHeader fixed part 177 B (Options set = 6 B), file entry 10 Str + 43 B, location 85 B, icon 13 Str + 48 B (not 51), registry 9
